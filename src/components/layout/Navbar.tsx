@@ -10,8 +10,8 @@ const Navbar: React.FC = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl">ЦСКА</span>
-            <span className="text-cska-red font-bold">Книга жалоб</span>
+            <span className="font-bold text-xl">ТЦ "ЦСКА"</span>
+            <span className="text-cska-red font-bold">Книга жалоб и предложений</span>
           </Link>
           
           {/* Mobile menu */}
