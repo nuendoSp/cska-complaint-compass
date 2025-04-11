@@ -31,7 +31,7 @@ const App = () => (
             <Route path="/success" element={<SuccessPage />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route 
-              path="/admin" 
+              path="/admin/*" 
               element={
                 <ProtectedRoute>
                   <AdminPage />

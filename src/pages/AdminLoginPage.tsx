@@ -5,31 +5,30 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 const AdminLoginPage = () => {
-  const [login, setLogin] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Временные учетные данные для теста
-    if (login === 'admin' && password === 'admin123') {
-      localStorage.setItem('isAdmin', 'true');
-      navigate('/admin');
-      toast({
-        title: "Успешный вход",
-        description: "Вы успешно вошли в систему как администратор",
-      });
+    // Временные учетные данные для тестирования
+    if (email === 'admin@cska.ru' && password === 'admin123') {
+      try {
+        localStorage.setItem('isAdmin', 'true');
+        toast.success('Вход выполнен успешно');
+        console.log('Авторизация успешна, перенаправляем на /admin');
+        navigate('/admin');
+      } catch (error) {
+        console.error('Ошибка при сохранении в localStorage:', error);
+        toast.error('Ошибка при входе в систему');
+      }
     } else {
-      toast({
-        variant: "destructive",
-        title: "Ошибка входа",
-        description: "Неверный логин или пароль",
-      });
+      console.log('Неверные учетные данные:', { email, password });
+      toast.error('Неверный email или пароль');
     }
   };
 
@@ -41,13 +40,13 @@ const AdminLoginPage = () => {
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="login">Логин</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="login"
-                type="text"
-                value={login}
-                onChange={(e) => setLogin(e.target.value)}
-                placeholder="Введите логин"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Введите email"
                 required
               />
             </div>
@@ -68,6 +67,12 @@ const AdminLoginPage = () => {
               Войти
             </Button>
           </form>
+
+          <div className="mt-4 text-sm text-gray-500">
+            <p>Тестовые данные для входа:</p>
+            <p>Email: admin@cska.ru</p>
+            <p>Пароль: admin123</p>
+          </div>
         </Card>
       </div>
     </Layout>

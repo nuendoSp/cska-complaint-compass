@@ -1,0 +1,129 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
+import { Complaint } from '../../types';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../ui/table';
+import { Badge } from '../ui/badge';
+
+interface ChangeHistory {
+  id: string;
+  complaint_id: string;
+  field: string;
+  old_value: string;
+  new_value: string;
+  changed_by: string;
+  changed_at: string;
+}
+
+export const ChangeHistory = () => {
+  const [history, setHistory] = useState<ChangeHistory[]>([]);
+  const [complaints, setComplaints] = useState<Record<string, Complaint>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [historyData, complaintsData] = await Promise.all([
+        supabase.from('change_history').select('*').order('changed_at', { ascending: false }),
+        supabase.from('complaints').select('*')
+      ]);
+
+      if (historyData.error) throw historyData.error;
+      if (complaintsData.error) throw complaintsData.error;
+
+      setHistory(historyData.data || []);
+      const complaintsMap = (complaintsData.data || []).reduce((acc, complaint) => {
+        acc[complaint.id] = complaint;
+        return acc;
+      }, {} as Record<string, Complaint>);
+      setComplaints(complaintsMap);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getFieldDisplayName = (field: string) => {
+    const fieldNames: Record<string, string> = {
+      status: 'Статус',
+      priority_id: 'Приоритет',
+      assignee_id: 'Ответственный',
+      response: 'Ответ'
+    };
+    return fieldNames[field] || field;
+  };
+
+  const formatValue = (field: string, value: string) => {
+    if (field === 'status') {
+      const statusColors: Record<string, string> = {
+        new: 'bg-blue-500',
+        processing: 'bg-yellow-500',
+        resolved: 'bg-green-500',
+        rejected: 'bg-red-500'
+      };
+      return (
+        <Badge className={statusColors[value]}>
+          {value}
+        </Badge>
+      );
+    }
+    return value;
+  };
+
+  if (loading) {
+    return <div>Загрузка...</div>;
+  }
+
+  return (
+    <div className="space-y-6 p-6">
+      <h1 className="text-3xl font-bold">История изменений</h1>
+      
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Время</TableHead>
+            <TableHead>Жалоба</TableHead>
+            <TableHead>Поле</TableHead>
+            <TableHead>Старое значение</TableHead>
+            <TableHead>Новое значение</TableHead>
+            <TableHead>Изменено</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {history.map((change) => (
+            <TableRow key={change.id}>
+              <TableCell>
+                {new Date(change.changed_at).toLocaleString()}
+              </TableCell>
+              <TableCell>
+                {complaints[change.complaint_id]?.description || 'Неизвестно'}
+              </TableCell>
+              <TableCell>
+                {getFieldDisplayName(change.field)}
+              </TableCell>
+              <TableCell>
+                {formatValue(change.field, change.old_value)}
+              </TableCell>
+              <TableCell>
+                {formatValue(change.field, change.new_value)}
+              </TableCell>
+              <TableCell>
+                {change.changed_by}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}; 

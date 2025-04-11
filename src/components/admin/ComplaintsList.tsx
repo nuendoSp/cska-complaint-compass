@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,13 +24,16 @@ import { Complaint, ComplaintCategory } from '@/types';
 interface ComplaintsListProps {
   complaints: Complaint[];
   searchTerm: string;
-  setSearchTerm: (value: string) => void;
+  setSearchTerm: (term: string) => void;
   filterCategory: ComplaintCategory | 'all';
-  setFilterCategory: (value: ComplaintCategory | 'all') => void;
+  setFilterCategory: (category: ComplaintCategory | 'all') => void;
   filterStatus: Complaint['status'] | 'all';
-  setFilterStatus: (value: Complaint['status'] | 'all') => void;
+  setFilterStatus: (status: Complaint['status'] | 'all') => void;
   onUpdateStatus: (id: string, status: Complaint['status']) => void;
-  onOpenResponseDialog: (complaintId: string) => void;
+  onOpenResponseDialog: (complaint: Complaint) => void;
+  onDeleteResponse: (complaintId: string, responseId: string) => void;
+  onDeleteComplaint: (complaintId: string) => void;
+  onDeleteMultipleComplaints: (complaintIds: string[]) => void;
 }
 
 const ComplaintsList: React.FC<ComplaintsListProps> = ({
@@ -44,12 +46,17 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
   setFilterStatus,
   onUpdateStatus,
   onOpenResponseDialog,
+  onDeleteResponse,
+  onDeleteComplaint,
+  onDeleteMultipleComplaints,
 }) => {
+  const [selectedComplaints, setSelectedComplaints] = useState<string[]>([]);
+
   // Filter complaints based on search and filters
   const filteredComplaints = complaints.filter(complaint => {
     const matchesSearch = 
       complaint.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      complaint.locationName.toLowerCase().includes(searchTerm.toLowerCase());
+      complaint.location.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = filterCategory === 'all' || complaint.category === filterCategory;
     const matchesStatus = filterStatus === 'all' || complaint.status === filterStatus;
@@ -59,8 +66,23 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
 
   // Sort by date, newest first
   const sortedComplaints = [...filteredComplaints].sort(
-    (a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()
+    (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
   );
+
+  const handleSelectComplaint = (complaintId: string) => {
+    setSelectedComplaints(prev => 
+      prev.includes(complaintId) 
+        ? prev.filter(id => id !== complaintId)
+        : [...prev, complaintId]
+    );
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedComplaints.length > 0) {
+      onDeleteMultipleComplaints(selectedComplaints);
+      setSelectedComplaints([]);
+    }
+  };
 
   return (
     <div>
@@ -76,6 +98,16 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
         </div>
         
         <div className="flex gap-3">
+          {selectedComplaints.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteSelected}
+            >
+              Удалить выбранные ({selectedComplaints.length})
+            </Button>
+          )}
+          
           <Select 
             value={filterCategory} 
             onValueChange={(value) => setFilterCategory(value as ComplaintCategory | 'all')}
@@ -118,25 +150,48 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
           <p className="text-gray-500">Жалобы не найдены</p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {sortedComplaints.map((complaint) => (
-            <Card key={complaint.id} className="overflow-hidden">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start mb-1">
-                  <CardTitle className="text-lg">{complaint.locationName}</CardTitle>
-                  <StatusBadge status={complaint.status} />
+        <div className="space-y-4">
+          {sortedComplaints.map(complaint => (
+            <Card 
+              key={complaint.id}
+              className={selectedComplaints.includes(complaint.id) ? 'border-blue-500 bg-blue-50' : ''}
+            >
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedComplaints.includes(complaint.id)}
+                      onChange={() => handleSelectComplaint(complaint.id)}
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <div>
+                      <CardTitle className="text-lg">
+                        Жалоба #{complaint.id}
+                      </CardTitle>
+                      <CardDescription>
+                        {format(new Date(complaint.submittedAt), 'dd.MM.yyyy HH:mm')}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={complaint.status} />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => onDeleteComplaint(complaint.id)}
+                    >
+                      <XCircle className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <CardDescription className="flex justify-between items-center">
-                  <span>Категория: {complaint.category}</span>
-                  <span className="text-sm text-gray-500">
-                    {format(complaint.submittedAt, 'dd.MM.yyyy HH:mm')}
-                  </span>
-                </CardDescription>
               </CardHeader>
+
               <CardContent>
                 <p className="text-gray-700 mb-4">{complaint.description}</p>
                 
-                {complaint.attachments.length > 0 && (
+                {complaint.attachments && complaint.attachments.length > 0 && (
                   <div className="mb-4">
                     <p className="text-sm font-medium text-gray-500 mb-2">Вложения:</p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -168,46 +223,65 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
                         <MessageSquare className="h-4 w-4 mr-1" />
                         Ответ администратора
                       </h4>
-                      <span className="text-xs text-gray-500">
-                        {format(complaint.response.respondedAt, 'dd.MM.yyyy HH:mm')}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">
+                          {format(new Date(complaint.response.respondedAt), 'dd.MM.yyyy HH:mm')}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => onDeleteResponse(complaint.id, complaint.response.id)}
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     <p className="text-sm text-gray-700">{complaint.response.text}</p>
                     <p className="text-xs text-gray-500 mt-2">Ответил: {complaint.response.adminName}</p>
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex justify-between bg-gray-50 px-6 py-3">
+
+              <CardFooter className="flex justify-between">
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="gap-1">
                     <FileText className="h-3.5 w-3.5" />
                     Подробнее
                   </Button>
                 </div>
-                
+
                 <div className="flex gap-2">
                   {complaint.status === 'new' && (
                     <>
-                      <Button variant="outline" size="sm" className="gap-1 border-yellow-500 text-yellow-500 hover:bg-yellow-50"
-                        onClick={() => onUpdateStatus(complaint.id, 'processing')}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-1 border-yellow-500 text-yellow-500 hover:bg-yellow-50"
+                        onClick={() => onUpdateStatus(complaint.id, 'processing')}
+                      >
                         <Clock className="h-3.5 w-3.5" />
                         Взять в работу
                       </Button>
-                      <Button variant="outline" size="sm" className="gap-1 border-red-500 text-red-500 hover:bg-red-50"
-                        onClick={() => onUpdateStatus(complaint.id, 'rejected')}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-1 border-red-500 text-red-500 hover:bg-red-50"
+                        onClick={() => onUpdateStatus(complaint.id, 'rejected')}
+                      >
                         <XCircle className="h-3.5 w-3.5" />
                         Отклонить
                       </Button>
                     </>
                   )}
-                  
+
                   {complaint.status === 'processing' && (
                     <>
                       <Button 
                         variant="outline" 
                         size="sm" 
                         className="gap-1 border-blue-500 text-blue-500 hover:bg-blue-50"
-                        onClick={() => onOpenResponseDialog(complaint.id)}
+                        onClick={() => onOpenResponseDialog(complaint)}
                       >
                         <MessageSquare className="h-3.5 w-3.5" />
                         Ответить
@@ -223,7 +297,7 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
                       </Button>
                     </>
                   )}
-                  
+
                   {(complaint.status === 'resolved' || complaint.status === 'rejected') && !complaint.response && (
                     <Button 
                       variant="outline" 

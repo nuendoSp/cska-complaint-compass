@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,17 +29,15 @@ import { X, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 const categories: ComplaintCategory[] = [
-  "Facilities",
-  "Staff",
-  "Equipment",
-  "Cleanliness",
-  "Services",
-  "Safety",
-  "Other"
+  "stadium",
+  "team",
+  "tickets",
+  "merchandise",
+  "other"
 ];
 
 const complaintSchema = z.object({
-  category: z.enum(["Facilities", "Staff", "Equipment", "Cleanliness", "Services", "Safety", "Other"]),
+  category: z.enum(["stadium", "team", "tickets", "merchandise", "other"]),
   description: z.string().min(10, {
     message: "Описание должно содержать не менее 10 символов.",
   }),
@@ -65,7 +62,7 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
   const form = useForm<z.infer<typeof complaintSchema>>({
     resolver: zodResolver(complaintSchema),
     defaultValues: {
-      category: "Facilities",
+      category: "stadium",
       description: "",
     },
   });
@@ -124,8 +121,7 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
     
     try {
       addComplaint({
-        locationId,
-        locationName,
+        location: locationName,
         category: data.category,
         description: data.description,
         attachments
@@ -164,13 +160,11 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Facilities">Помещения и сооружения</SelectItem>
-                    <SelectItem value="Staff">Персонал</SelectItem>
-                    <SelectItem value="Equipment">Оборудование</SelectItem>
-                    <SelectItem value="Cleanliness">Чистота</SelectItem>
-                    <SelectItem value="Services">Услуги</SelectItem>
-                    <SelectItem value="Safety">Безопасность</SelectItem>
-                    <SelectItem value="Other">Другое</SelectItem>
+                    <SelectItem value="stadium">Стадион</SelectItem>
+                    <SelectItem value="team">Команда</SelectItem>
+                    <SelectItem value="tickets">Билеты</SelectItem>
+                    <SelectItem value="merchandise">Мерч</SelectItem>
+                    <SelectItem value="other">Другое</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormDescription>
