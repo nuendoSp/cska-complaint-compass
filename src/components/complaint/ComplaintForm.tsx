@@ -37,7 +37,7 @@ const categories: ComplaintCategory[] = [
 ];
 
 const complaintSchema = z.object({
-  category: z.enum(["stadium", "team", "tickets", "merchandise", "other"]),
+  category: z.enum(["Facilities", "Staff", "Equipment", "Cleanliness", "Services", "Safety", "Other"]),
   description: z.string().min(10, {
     message: "Описание должно содержать не менее 10 символов.",
   }),
@@ -62,7 +62,7 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
   const form = useForm<z.infer<typeof complaintSchema>>({
     resolver: zodResolver(complaintSchema),
     defaultValues: {
-      category: "stadium",
+      category: "Facilities",
       description: "",
     },
   });
@@ -149,26 +149,28 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Категория</FormLabel>
+                <FormLabel>Категория жалобы</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Выберите категорию" />
+                      <SelectValue placeholder="Выберите категорию жалобы" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="stadium">Стадион</SelectItem>
-                    <SelectItem value="team">Команда</SelectItem>
-                    <SelectItem value="tickets">Билеты</SelectItem>
-                    <SelectItem value="merchandise">Мерч</SelectItem>
-                    <SelectItem value="other">Другое</SelectItem>
+                    <SelectItem value="Facilities">Помещения и инфраструктура</SelectItem>
+                    <SelectItem value="Staff">Персонал</SelectItem>
+                    <SelectItem value="Equipment">Оборудование</SelectItem>
+                    <SelectItem value="Cleanliness">Чистота</SelectItem>
+                    <SelectItem value="Services">Услуги</SelectItem>
+                    <SelectItem value="Safety">Безопасность</SelectItem>
+                    <SelectItem value="Other">Другое</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Выберите категорию, которая лучше всего описывает вашу жалобу
+                  Укажите, к чему относится ваша жалоба
                 </FormDescription>
                 <FormMessage />
               </FormItem>

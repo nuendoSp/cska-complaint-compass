@@ -30,11 +30,13 @@ export interface Complaint {
 }
 
 export type ComplaintCategory = 
-  | 'stadium'
-  | 'team'
-  | 'tickets'
-  | 'merchandise'
-  | 'other';
+  | "Facilities"
+  | "Staff"
+  | "Equipment"
+  | "Cleanliness"
+  | "Services"
+  | "Safety"
+  | "Other";
 
 export type ComplaintStatus = 
   | 'new'
