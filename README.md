@@ -1,4 +1,4 @@
-# Complaint Compass
+# Compiz
 
 A modern web application for managing and tracking complaints.
 
@@ -42,3 +42,21 @@ npm run build
 
 ## License
 This project is licensed under the MIT License.
+
+## Развертывание
+
+Приложение автоматически разворачивается на Vercel при каждом пуше в main ветку.
+
+### Используемые технологии:
+- React + Vite
+- Supabase для базы данных
+- Vercel для хостинга
+- GitHub Actions для CI/CD
+- Telegram для уведомлений
+
+### Основные функции:
+- Создание и обработка обращений
+- Управление приоритетами
+- Уведомления через Telegram
+- История изменений
+- Шаблоны ответов
