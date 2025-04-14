@@ -70,6 +70,18 @@ export const createTables = async () => {
       console.log('Таблица change_history создана успешно');
     }
 
+    // Создаем таблицу content_management
+    const { error: contentError } = await supabase
+      .from('content_management')
+      .select()
+      .limit(1);
+
+    if (contentError && contentError.code === '42P01') {
+      const { error } = await supabase.rpc('create_content_management_table', {});
+      if (error) throw error;
+      console.log('Таблица content_management создана успешно');
+    }
+
     console.log('Все таблицы успешно созданы или уже существуют');
     return true;
   } catch (error) {

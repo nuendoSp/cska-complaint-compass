@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ComplaintProvider } from "@/context/ComplaintContext";
+import { ContentProvider } from "@/context/ContentContext";
 import { createTables } from "@/lib/supabase";
 import { useEffect } from "react";
 import Index from "./pages/Index";
@@ -33,28 +34,30 @@ const AppContent = () => {
 
   return (
     <ComplaintProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/complaint" element={<ComplaintPage />} />
-          <Route path="/locations" element={<LocationsPage />} />
-          <Route path="/success" element={<SuccessPage />} />
-          <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route 
-            path="/admin/*" 
-            element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route path="/complaints" element={<ComplaintsListPage />} />
-          <Route path="/complaints/:complaintId" element={<ComplaintDetailPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <ContentProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter basename="/cska-complaint-compass">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/complaint" element={<ComplaintPage />} />
+            <Route path="/locations" element={<LocationsPage />} />
+            <Route path="/success" element={<SuccessPage />} />
+            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route 
+              path="/admin/*" 
+              element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="/complaints" element={<ComplaintsListPage />} />
+            <Route path="/complaints/:complaintId" element={<ComplaintDetailPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </ContentProvider>
     </ComplaintProvider>
   );
 };

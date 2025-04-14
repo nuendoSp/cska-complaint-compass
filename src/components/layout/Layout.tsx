@@ -1,6 +1,5 @@
 import React from 'react';
 import Navbar from './Navbar';
-import { ComplaintProvider } from '@/context/ComplaintContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,19 +7,17 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <ComplaintProvider>
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow container mx-auto px-4 py-6">
-          {children}
-        </main>
-        <footer className="bg-gray-100 py-4 mt-auto">
-          <div className="container mx-auto px-4">
-            <p>© {new Date().getFullYear()} ТЦ "ЦСКА"</p>
-          </div>
-        </footer>
-      </div>
-    </ComplaintProvider>
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <Navbar />
+      <main className="flex-grow">
+        {children}
+      </main>
+      <footer className="bg-gray-100 py-4 mt-auto border-t border-gray-200">
+        <div className="container mx-auto px-4 text-center text-gray-600">
+          <p>© {new Date().getFullYear()} ТЦ "ЦСКА"</p>
+        </div>
+      </footer>
+    </div>
   );
 };
 

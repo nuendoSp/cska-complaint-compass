@@ -30,16 +30,16 @@ export interface Complaint {
 }
 
 export type ComplaintCategory = 
-  | "Facilities"
-  | "Staff"
-  | "Equipment"
-  | "Cleanliness"
-  | "Services"
-  | "Safety"
-  | "Other";
+  | "service_quality"
+  | "facility_issues"
+  | "staff_behavior"
+  | "equipment_problems"
+  | "safety_concerns"
+  | "stadium"
+  | "other";
 
 export type ComplaintStatus = 
   | 'new'
-  | 'processing'
+  | 'in_progress'
   | 'resolved'
-  | 'rejected'; 
+  | 'closed'; 

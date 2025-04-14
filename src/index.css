@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -151,4 +150,29 @@
   bottom: -2px;
   right: -2px;
   border-width: 0 2px 2px 0;
+}
+
+/* ЦСКА специфичные стили */
+.bg-cska-blue {
+  background-color: #1a365d;
+}
+
+.text-cska-red {
+  color: #e53e3e;
+}
+
+.hover\:bg-cska-blue-light:hover {
+  background-color: #2a4a7f;
+}
+
+.hover\:text-cska-red:hover {
+  color: #e53e3e;
+}
+
+.border-cska-blue {
+  border-color: #1a365d;
+}
+
+.shadow-cska {
+  box-shadow: 0 4px 6px -1px rgba(26, 54, 93, 0.1), 0 2px 4px -1px rgba(26, 54, 93, 0.06);
 }
