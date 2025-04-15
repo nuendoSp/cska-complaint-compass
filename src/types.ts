@@ -42,4 +42,6 @@ export type ComplaintStatus =
   | 'new'
   | 'in_progress'
   | 'resolved'
-  | 'closed'; 
+  | 'closed'
+  | 'processing'
+  | 'rejected'; 
