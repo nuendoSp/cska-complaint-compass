@@ -19,7 +19,9 @@ const statusLabels: Record<ComplaintStatus, string> = {
   'new': 'Новые',
   'in_progress': 'В обработке',
   'resolved': 'Решенные',
-  'closed': 'Закрытые'
+  'closed': 'Закрытые',
+  'processing': 'В процессе',
+  'rejected': 'Отклоненные'
 };
 
 const categoryLabels: Record<ComplaintCategory, string> = {
@@ -69,7 +71,9 @@ export const Statistics = () => {
           'new': 0,
           'in_progress': 0,
           'resolved': 0,
-          'closed': 0
+          'closed': 0,
+          'processing': 0,
+          'rejected': 0
         },
         complaintsByCategory: {
           'service_quality': 0,
