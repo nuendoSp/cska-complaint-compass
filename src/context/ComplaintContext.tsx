@@ -63,7 +63,8 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           response: complaint.response ? {
             id: complaint.response.id,
             text: complaint.response.text,
-            created_at: complaint.response.created_at
+            created_at: complaint.response.created_at,
+            respondedAt: complaint.response.respondedAt || complaint.response.created_at
           } : undefined,
           priority_id: complaint.priority_id,
           assignee_id: complaint.assignee_id,
@@ -110,7 +111,8 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         response: data.response ? {
           id: data.response.id,
           text: data.response.text,
-          created_at: data.response.created_at
+          created_at: data.response.created_at,
+          respondedAt: data.response.respondedAt || data.response.created_at
         } : undefined,
         priority_id: data.priority_id,
         assignee_id: data.assignee_id,
@@ -160,7 +162,8 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         response: data.response ? {
           id: data.response.id,
           text: data.response.text,
-          created_at: data.response.created_at
+          created_at: data.response.created_at,
+          respondedAt: data.response.respondedAt || data.response.created_at
         } : undefined,
         priority_id: data.priority_id,
         assignee_id: data.assignee_id,
@@ -202,6 +205,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const responseData = {
         ...response,
         created_at: new Date().toISOString(),
+        respondedAt: new Date().toISOString(),
       };
 
       const { data, error } = await supabase
@@ -232,7 +236,8 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         response: data.response ? {
           id: data.response.id,
           text: data.response.text,
-          created_at: data.response.created_at
+          created_at: data.response.created_at,
+          respondedAt: data.response.respondedAt || data.response.created_at
         } : undefined,
         priority_id: data.priority_id,
         assignee_id: data.assignee_id,
@@ -278,7 +283,8 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         response: data.response ? {
           id: data.response.id,
           text: data.response.text,
-          created_at: data.response.created_at
+          created_at: data.response.created_at,
+          respondedAt: data.response.respondedAt || data.response.created_at
         } : undefined,
         priority_id: data.priority_id,
         assignee_id: data.assignee_id,
@@ -316,7 +322,8 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         response: complaint.response ? {
           id: complaint.response.id,
           text: complaint.response.text,
-          created_at: complaint.response.created_at
+          created_at: complaint.response.created_at,
+          respondedAt: complaint.response.respondedAt || complaint.response.created_at
         } : undefined,
         priority_id: complaint.priority_id,
         assignee_id: complaint.assignee_id,
@@ -363,7 +370,8 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         response: data.response ? {
           id: data.response.id,
           text: data.response.text,
-          created_at: data.response.created_at
+          created_at: data.response.created_at,
+          respondedAt: data.response.respondedAt || data.response.created_at
         } : undefined,
         priority_id: data.priority_id,
         assignee_id: data.assignee_id,
