@@ -13,7 +13,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false,
+    sourcemap: true,
     minify: 'terser',
     terserOptions: {
       compress: {
@@ -28,5 +28,9 @@ export default defineConfig({
         },
       },
     },
+  },
+  server: {
+    port: 3000,
+    host: true,
   },
 });
