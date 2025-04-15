@@ -37,7 +37,7 @@ const AppContent = () => {
       <ContentProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter basename="/cska-complaint-compass">
+        <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/complaint" element={<ComplaintPage />} />
