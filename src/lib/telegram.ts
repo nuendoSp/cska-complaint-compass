@@ -1,4 +1,28 @@
-import { Complaint, ComplaintStatus, ComplaintCategory } from '@/types';
+import { Complaint, ComplaintStatus, ComplaintCategory } from '../types';
+
+const statusEmojis: Record<ComplaintStatus, string> = {
+  new: '🆕',
+  processing: '🔄',
+  resolved: '✅',
+  rejected: '❌',
+  in_progress: '⏳',
+  closed: '🔒'
+};
+
+const categoryEmojis: Record<ComplaintCategory, string> = {
+  team: '👥',
+  tickets: '🎫',
+  merchandise: '👕',
+  facilities: '🏟️',
+  staff: '👨‍💼',
+  equipment: '🔧',
+  cleanliness: '🧹',
+  services: '🛎️',
+  safety: '🛡️',
+  other: '❓',
+  stadium: '🏟️',
+  service_quality: '⭐'
+};
 
 const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID;
@@ -31,17 +55,13 @@ const isAdmin = () => {
 };
 
 const formatComplaintMessage = (complaint: Complaint) => {
-  const statusEmoji = {
-    new: '🆕',
-    processing: '🔄',
-    resolved: '✅',
-    rejected: '❌'
-  }[complaint.status];
+  const statusEmoji = statusEmojis[complaint.status];
+  const categoryEmoji = categoryEmojis[complaint.category];
 
   return `
 <b>${statusEmoji} Новая жалоба #${complaint.id}</b>
 
-<b>Категория:</b> ${getCategoryText(complaint.category)}
+<b>Категория:</b> ${categoryEmoji} ${getCategoryText(complaint.category)}
 <b>Описание:</b> ${complaint.description}
 <b>Локация:</b> ${complaint.location}
 <b>Статус:</b> ${getStatusText(complaint.status)}
@@ -53,17 +73,13 @@ ${complaint.attachments?.length ? `\n<b>Вложения:</b> ${complaint.attach
 };
 
 const formatStatusUpdateMessage = (complaint: Complaint) => {
-  const statusEmoji = {
-    new: '🆕',
-    processing: '🔄',
-    resolved: '✅',
-    rejected: '❌'
-  }[complaint.status];
+  const statusEmoji = statusEmojis[complaint.status];
+  const categoryEmoji = categoryEmojis[complaint.category];
 
   return `
 <b>${statusEmoji} Обновление статуса жалобы #${complaint.id}</b>
 
-<b>Категория:</b> ${getCategoryText(complaint.category)}
+<b>Категория:</b> ${categoryEmoji} ${getCategoryText(complaint.category)}
 <b>Описание:</b> ${complaint.description}
 <b>Локация:</b> ${complaint.location}
 <b>Новый статус:</b> ${getStatusText(complaint.status)}
@@ -98,46 +114,58 @@ const sendPhotoToTelegram = async (photoUrl: string, caption: string) => {
   }
 };
 
-export const sendTelegramNotification = async (complaint: Complaint) => {
-  // Проверяем, является ли пользователь администратором
-  if (!isAdmin()) {
-    console.log('Уведомление не отправлено: пользователь не является администратором');
-    return false;
+export const sendTelegramNotification = async (complaint: Complaint, action: 'created' | 'updated' | 'responded') => {
+  const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+  const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
+
+  if (!botToken || !chatId) {
+    console.error('Telegram credentials not configured');
+    return;
+  }
+
+  const statusEmoji = statusEmojis[complaint.status];
+  const categoryEmoji = categoryEmojis[complaint.category];
+
+  let message = '';
+  if (action === 'created') {
+    message = `🆕 Новая жалоба #${complaint.id}\n\n` +
+      `${categoryEmoji} Категория: ${complaint.category}\n` +
+      `📝 Описание: ${complaint.description}\n` +
+      `📍 Местоположение: ${complaint.location}\n` +
+      `📧 Email: ${complaint.contact_email || 'Не указан'}\n` +
+      `📞 Телефон: ${complaint.contact_phone || 'Не указан'}`;
+  } else if (action === 'updated') {
+    message = `🔄 Обновлена жалоба #${complaint.id}\n\n` +
+      `${statusEmoji} Статус: ${complaint.status}\n` +
+      `${categoryEmoji} Категория: ${complaint.category}\n` +
+      `📝 Описание: ${complaint.description}\n` +
+      `📍 Местоположение: ${complaint.location}`;
+  } else if (action === 'responded' && complaint.response) {
+    message = `💬 Ответ на жалобу #${complaint.id}\n\n` +
+      `${statusEmoji} Статус: ${complaint.status}\n` +
+      `👨‍💼 Администратор: ${complaint.response.adminName}\n` +
+      `📝 Ответ: ${complaint.response.message || complaint.response.text}\n` +
+      `⏰ Время ответа: ${new Date(complaint.response.respondedAt).toLocaleString()}`;
   }
 
   try {
-    const message = formatComplaintMessage(complaint);
-    
-    // Если есть изображения, отправляем первое как фото с подписью
-    if (complaint.attachments?.length) {
-      const firstImage = complaint.attachments.find(a => a.type === 'image');
-      if (firstImage) {
-        await sendPhotoToTelegram(firstImage.url, message);
-        return true;
-      }
-    }
-
-    // Если нет изображений или не удалось отправить фото, отправляем текстовое сообщение
-    const response = await fetch(`${TELEGRAM_API_URL}/sendMessage`, {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
+        chat_id: chatId,
         text: message,
-        parse_mode: 'HTML',
-      }),
+        parse_mode: 'HTML'
+      })
     });
 
     if (!response.ok) {
-      throw new Error('Failed to send Telegram notification');
+      throw new Error(`Telegram API error: ${response.statusText}`);
     }
-
-    return true;
   } catch (error) {
-    console.error('Error sending Telegram notification:', error);
-    return false;
+    console.error('Failed to send Telegram notification:', error);
   }
 };
 
