@@ -15,8 +15,8 @@ const AdminLoginPage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Временные учетные данные для тестирования
-    if (email === 'admin@cska.ru' && password === 'admin123') {
+    // Проверка учетных данных администратора
+    if (email === 'cska.tennis.alm@gmail.com' && password === 'admin_Cska') {
       try {
         localStorage.setItem('isAdmin', 'true');
         toast.success('Вход выполнен успешно');
