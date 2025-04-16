@@ -28,16 +28,24 @@ import {
 import { X, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
-const categories: ComplaintCategory[] = [
-  "stadium",
-  "team",
-  "tickets",
-  "merchandise",
+const categories = [
+  "facilities",
+  "staff",
+  "equipment",
+  "cleanliness",
+  "services",
+  "safety",
+  "service_quality",
   "other"
-];
+] as const;
+
+type FormData = {
+  category: ComplaintCategory;
+  description: string;
+};
 
 const complaintSchema = z.object({
-  category: z.enum(["Facilities", "Staff", "Equipment", "Cleanliness", "Services", "Safety", "Other"]),
+  category: z.enum(categories),
   description: z.string().min(10, {
     message: "Описание должно содержать не менее 10 символов.",
   }),
@@ -59,34 +67,37 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<z.infer<typeof complaintSchema>>({
+  const form = useForm<FormData>({
     resolver: zodResolver(complaintSchema),
     defaultValues: {
-      category: "Facilities",
+      category: "facilities",
       description: "",
     },
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
 
     const newAttachments: FileAttachment[] = [];
-    
-    Array.from(files).forEach(file => {
-      // Check file type
+    const files = Array.from(e.target.files);
+
+    for (const file of files) {
       const isImage = file.type.startsWith('image/');
       const isVideo = file.type.startsWith('video/');
-      
+
       if (!isImage && !isVideo) {
-        toast.error('Только изображения и видео файлы поддерживаются');
-        return;
+        toast.error(`Файл ${file.name} не является изображением или видео`);
+        continue;
       }
-      
-      // Check file size (max 10MB)
+
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('Файл слишком большой. Максимальный размер - 10MB');
-        return;
+        toast.error(`Файл ${file.name} превышает 10MB`);
+        continue;
+      }
+
+      if (attachments.length + newAttachments.length >= 5) {
+        toast.error('Максимальное количество файлов - 5');
+        break;
       }
 
       const fileType = isImage ? 'image' : 'video';
@@ -96,9 +107,10 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
         id: Math.random().toString(36).substring(2, 9),
         type: fileType,
         url: fileUrl,
-        name: file.name
+        name: file.name,
+        size: file.size
       });
-    });
+    }
 
     setAttachments(prev => [...prev, ...newAttachments]);
     
@@ -116,15 +128,19 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
     });
   };
 
-  const onSubmit = (data: z.infer<typeof complaintSchema>) => {
+  const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     
     try {
-      addComplaint({
+      await addComplaint({
         location: locationName,
+        locationId: propLocationId || '',
+        locationName: propLocationName || locationName,
         category: data.category,
         description: data.description,
-        attachments
+        attachments,
+        contact_email: '',
+        contact_phone: ''
       });
       
       toast.success("Жалоба успешно отправлена");
@@ -160,13 +176,14 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Facilities">Помещения и инфраструктура</SelectItem>
-                    <SelectItem value="Staff">Персонал</SelectItem>
-                    <SelectItem value="Equipment">Оборудование</SelectItem>
-                    <SelectItem value="Cleanliness">Чистота</SelectItem>
-                    <SelectItem value="Services">Услуги</SelectItem>
-                    <SelectItem value="Safety">Безопасность</SelectItem>
-                    <SelectItem value="Other">Другое</SelectItem>
+                    <SelectItem value="facilities">Объекты</SelectItem>
+                    <SelectItem value="staff">Персонал</SelectItem>
+                    <SelectItem value="equipment">Оборудование</SelectItem>
+                    <SelectItem value="cleanliness">Чистота</SelectItem>
+                    <SelectItem value="services">Услуги</SelectItem>
+                    <SelectItem value="safety">Безопасность</SelectItem>
+                    <SelectItem value="service_quality">Качество обслуживания</SelectItem>
+                    <SelectItem value="other">Другое</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormDescription>

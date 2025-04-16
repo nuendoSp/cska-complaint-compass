@@ -10,18 +10,14 @@ const statusEmojis: Record<ComplaintStatus, string> = {
 };
 
 const categoryEmojis: Record<ComplaintCategory, string> = {
-  team: '👥',
-  tickets: '🎫',
-  merchandise: '👕',
   facilities: '🏟️',
   staff: '👨‍💼',
   equipment: '🔧',
   cleanliness: '🧹',
   services: '🛎️',
   safety: '🛡️',
-  other: '❓',
-  stadium: '🏟️',
-  service_quality: '⭐'
+  service_quality: '⭐',
+  other: '❓'
 };
 
 const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
@@ -42,18 +38,14 @@ const getStatusText = (status: ComplaintStatus): string => {
 
 const getCategoryText = (category: ComplaintCategory): string => {
   const categoryMap: Record<ComplaintCategory, string> = {
-    stadium: 'Стадион',
-    team: 'Команда',
-    tickets: 'Билеты',
-    merchandise: 'Мерч',
-    other: 'Другое',
     facilities: 'Объекты',
     staff: 'Персонал',
     equipment: 'Оборудование',
     cleanliness: 'Чистота',
     services: 'Услуги',
     safety: 'Безопасность',
-    service_quality: 'Качество обслуживания'
+    service_quality: 'Качество обслуживания',
+    other: 'Другое'
   };
   return categoryMap[category];
 };
