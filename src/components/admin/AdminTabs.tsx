@@ -30,6 +30,7 @@ import { ChangeHistory } from './ChangeHistory';
 import { FeedbackSystem } from './FeedbackSystem';
 import { Surveys } from './Surveys';
 import { Statistics } from './Statistics';
+import SurveysManager from './SurveysManager';
 
 const AdminTabs: React.FC = () => {
   const navigate = useNavigate();
@@ -80,7 +81,8 @@ const AdminTabs: React.FC = () => {
 
     respondToComplaint(responseDialog.complaintId, {
       text: responseText,
-      adminName
+      adminName,
+      respondedAt: new Date().toISOString()
     });
 
     handleCloseResponseDialog();
@@ -88,7 +90,8 @@ const AdminTabs: React.FC = () => {
   };
 
   const handleDeleteResponse = (complaintId: string, responseId: string) => {
-    // Реализация удаления ответа
+    deleteResponse(complaintId, responseId);
+    toast.success('Ответ успешно удален');
   };
 
   const handleDeleteComplaint = (complaintId: string) => {
@@ -101,14 +104,18 @@ const AdminTabs: React.FC = () => {
     }
   };
 
+  const handleDeleteMultipleComplaints = (complaintIds: string[]) => {
+    setDeleteMultipleDialog({
+      isOpen: true,
+      complaintIds
+    });
+  };
+
   const handleConfirmDelete = async () => {
     if (deleteDialog.complaint) {
       await deleteComplaint(deleteDialog.complaint.id);
+      handleCloseDeleteDialog();
       toast.success('Жалоба успешно удалена');
-      setDeleteDialog({
-        isOpen: false,
-        complaint: null
-      });
     }
   };
 
@@ -119,22 +126,12 @@ const AdminTabs: React.FC = () => {
     });
   };
 
-  const handleDeleteMultipleComplaints = (complaintIds: string[]) => {
-    setDeleteMultipleDialog({
-      isOpen: true,
-      complaintIds
-    });
-  };
-
   const handleConfirmMultipleDelete = async () => {
-    for (const complaintId of deleteMultipleDialog.complaintIds) {
-      await deleteComplaint(complaintId);
+    for (const id of deleteMultipleDialog.complaintIds) {
+      await deleteComplaint(id);
     }
-    toast.success(`Успешно удалено ${deleteMultipleDialog.complaintIds.length} жалоб`);
-    setDeleteMultipleDialog({
-      isOpen: false,
-      complaintIds: []
-    });
+    handleCloseMultipleDeleteDialog();
+    toast.success('Выбранные жалобы успешно удалены');
   };
 
   const handleCloseMultipleDeleteDialog = () => {
@@ -145,62 +142,84 @@ const AdminTabs: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="container mx-auto py-6">
       <div className="flex items-center mb-6">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="mr-2"
-          onClick={() => navigate(-1)}
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/')}
+          className="mr-4"
         >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Назад
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          На главную
         </Button>
         <h1 className="text-2xl font-bold">Панель администратора</h1>
       </div>
-      
-      <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+
+      <Tabs defaultValue="dashboard" className="space-y-4">
+        <TabsList>
           <TabsTrigger value="dashboard">Дашборд</TabsTrigger>
           <TabsTrigger value="complaints">Жалобы</TabsTrigger>
-          <TabsTrigger value="templates">Шаблоны</TabsTrigger>
-          <TabsTrigger value="settings">Настройки</TabsTrigger>
+          <TabsTrigger value="surveys">Опросы</TabsTrigger>
+          <TabsTrigger value="templates">Шаблоны ответов</TabsTrigger>
+          <TabsTrigger value="priorities">Приоритеты</TabsTrigger>
+          <TabsTrigger value="assignees">Исполнители</TabsTrigger>
+          <TabsTrigger value="history">История изменений</TabsTrigger>
+          <TabsTrigger value="feedback">Обратная связь</TabsTrigger>
+          <TabsTrigger value="statistics">Статистика</TabsTrigger>
+          <TabsTrigger value="export">Экспорт данных</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="dashboard">
           <Dashboard />
         </TabsContent>
-        
+
         <TabsContent value="complaints">
-          <ComplaintsList 
+          <ComplaintsList
             complaints={complaints}
+            onUpdateStatus={handleUpdateStatus}
+            onOpenResponseDialog={handleOpenResponseDialog}
+            onDeleteComplaint={handleDeleteComplaint}
+            onDeleteResponse={handleDeleteResponse}
+            onDeleteMultipleComplaints={handleDeleteMultipleComplaints}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             filterCategory={filterCategory}
             setFilterCategory={setFilterCategory}
             filterStatus={filterStatus}
             setFilterStatus={setFilterStatus}
-            onUpdateStatus={handleUpdateStatus}
-            onOpenResponseDialog={handleOpenResponseDialog}
-            onDeleteResponse={handleDeleteResponse}
-            onDeleteComplaint={handleDeleteComplaint}
-            onDeleteMultipleComplaints={handleDeleteMultipleComplaints}
           />
         </TabsContent>
-        
+
+        <TabsContent value="surveys">
+          <SurveysManager />
+        </TabsContent>
+
         <TabsContent value="templates">
           <ResponseTemplates />
         </TabsContent>
-        
-        <TabsContent value="settings">
-          <div className="space-y-4">
-            <PriorityManager />
-            <AssigneeManager />
-            <ChangeHistory />
-            <FeedbackSystem />
-            <Surveys />
-            <Statistics />
-          </div>
+
+        <TabsContent value="priorities">
+          <PriorityManager />
+        </TabsContent>
+
+        <TabsContent value="assignees">
+          <AssigneeManager />
+        </TabsContent>
+
+        <TabsContent value="history">
+          <ChangeHistory />
+        </TabsContent>
+
+        <TabsContent value="feedback">
+          <FeedbackSystem />
+        </TabsContent>
+
+        <TabsContent value="statistics">
+          <Statistics />
+        </TabsContent>
+
+        <TabsContent value="export">
+          <ExportData complaints={complaints} />
         </TabsContent>
       </Tabs>
 
@@ -208,36 +227,21 @@ const AdminTabs: React.FC = () => {
         isOpen={responseDialog.isOpen}
         onClose={handleCloseResponseDialog}
         onSubmit={handleSubmitResponse}
-        adminName={adminName}
-        setAdminName={setAdminName}
         responseText={responseText}
         setResponseText={setResponseText}
+        adminName={adminName}
+        setAdminName={setAdminName}
+        complaint={selectedComplaint}
       />
 
-      <Dialog open={deleteDialog.isOpen} onOpenChange={(open) => !open && handleCloseDeleteDialog()}>
+      <Dialog open={deleteDialog.isOpen} onOpenChange={handleCloseDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
-              Подтверждение удаления
-            </DialogTitle>
+            <DialogTitle>Подтверждение удаления</DialogTitle>
             <DialogDescription>
-              Вы собираетесь удалить жалобу #{deleteDialog.complaint?.id}. Это действие нельзя отменить.
+              Вы уверены, что хотите удалить эту жалобу? Это действие нельзя отменить.
             </DialogDescription>
           </DialogHeader>
-          
-          {deleteDialog.complaint && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Информация о жалобе:</p>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>Категория: {deleteDialog.complaint.category}</li>
-                <li>Локация: {deleteDialog.complaint.location}</li>
-                <li>Статус: {deleteDialog.complaint.status}</li>
-                <li>Дата создания: {new Date(deleteDialog.complaint.submittedAt).toLocaleString('ru-RU')}</li>
-              </ul>
-            </div>
-          )}
-
           <DialogFooter>
             <Button variant="outline" onClick={handleCloseDeleteDialog}>
               Отмена
@@ -249,43 +253,20 @@ const AdminTabs: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={deleteMultipleDialog.isOpen} onOpenChange={(open) => !open && handleCloseMultipleDeleteDialog()}>
+      <Dialog open={deleteMultipleDialog.isOpen} onOpenChange={handleCloseMultipleDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
-              Подтверждение удаления
-            </DialogTitle>
+            <DialogTitle>Подтверждение удаления</DialogTitle>
             <DialogDescription>
-              Вы собираетесь удалить {deleteMultipleDialog.complaintIds.length} жалоб. Это действие нельзя отменить.
+              Вы уверены, что хотите удалить выбранные жалобы? Это действие нельзя отменить.
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Выбранные жалобы:</p>
-            <ul className="text-sm text-gray-600 space-y-1 max-h-40 overflow-y-auto">
-              {deleteMultipleDialog.complaintIds.map(id => {
-                const complaint = complaints.find(c => c.id === id);
-                return (
-                  <li key={id} className="flex items-center gap-2">
-                    <span>#{id}</span>
-                    {complaint && (
-                      <span className="text-gray-500">
-                        ({complaint.category}, {complaint.status})
-                      </span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-
           <DialogFooter>
             <Button variant="outline" onClick={handleCloseMultipleDeleteDialog}>
               Отмена
             </Button>
             <Button variant="destructive" onClick={handleConfirmMultipleDelete}>
-              Удалить выбранные
+              Удалить
             </Button>
           </DialogFooter>
         </DialogContent>
