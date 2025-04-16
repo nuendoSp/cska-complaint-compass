@@ -1,3 +1,4 @@
+import { Complaint, ComplaintStatus, ComplaintCategory } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ComplaintStatus, ComplaintCategory } from '@/types';
+import { SelectItem } from '@/components/ui/select';
 
 const getStatusColor = (status: ComplaintStatus) => {
   switch (status) {
@@ -40,28 +41,34 @@ const getStatusText = (status: ComplaintStatus) => {
   }
 };
 
-const getCategoryText = (category: ComplaintCategory) => {
+const getCategoryText = (category: ComplaintCategory): string => {
   switch (category) {
-    case 'Facilities':
-      return 'Инфраструктура';
-    case 'Staff':
+    case 'facilities':
+      return 'Объекты и инфраструктура';
+    case 'staff':
       return 'Персонал';
-    case 'Equipment':
+    case 'equipment':
       return 'Оборудование';
-    case 'Cleanliness':
+    case 'cleanliness':
       return 'Чистота';
-    case 'Services':
+    case 'services':
       return 'Услуги';
-    case 'Safety':
+    case 'safety':
       return 'Безопасность';
-    case 'Other':
+    case 'other':
       return 'Другое';
     default:
       return category;
   }
 };
 
-export function ComplaintsList({ complaints, ...props }) {
+interface ComplaintsListProps {
+  complaints: Complaint[];
+  onOpenResponseDialog: (complaint: Complaint) => void;
+  onDeleteComplaint: (id: string) => void;
+}
+
+export function ComplaintsList({ complaints, onOpenResponseDialog, onDeleteComplaint }: ComplaintsListProps) {
   const isMobile = useIsMobile();
 
   return (
@@ -89,14 +96,14 @@ export function ComplaintsList({ complaints, ...props }) {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => props.onOpenResponseDialog(complaint)}
+                  onClick={() => onOpenResponseDialog(complaint)}
                 >
                   Ответить
                 </Button>
                 <Button
                   size="sm"
                   variant="destructive"
-                  onClick={() => props.onDeleteComplaint(complaint.id)}
+                  onClick={() => onDeleteComplaint(complaint.id)}
                 >
                   Удалить
                 </Button>
@@ -136,14 +143,14 @@ export function ComplaintsList({ complaints, ...props }) {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => props.onOpenResponseDialog(complaint)}
+                      onClick={() => onOpenResponseDialog(complaint)}
                     >
                       Ответить
                     </Button>
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => props.onDeleteComplaint(complaint.id)}
+                      onClick={() => onDeleteComplaint(complaint.id)}
                     >
                       Удалить
                     </Button>

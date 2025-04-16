@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import * as z from "zod";
 import { useComplaints } from '@/context/ComplaintContext';
 import { ComplaintCategory, FileAttachment } from '@/types';
@@ -35,7 +35,6 @@ const categories = [
   "cleanliness",
   "services",
   "safety",
-  "service_quality",
   "other"
 ] as const;
 
@@ -45,7 +44,7 @@ type FormData = {
 };
 
 const complaintSchema = z.object({
-  category: z.enum(categories),
+  category: z.enum(categories) as z.ZodType<ComplaintCategory>,
   description: z.string().min(10, {
     message: "Описание должно содержать не менее 10 символов.",
   }),
@@ -61,8 +60,8 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
   const navigate = useNavigate();
   const { addComplaint } = useComplaints();
   
-  const locationId = propLocationId || searchParams.get('locationId') || '';
   const locationName = propLocationName || searchParams.get('locationName') || 'Теннисный центр ЦСКА';
+  const locationId = propLocationId || searchParams.get('locationId') || '';
   
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,13 +127,13 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
     });
   };
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
     setIsSubmitting(true);
     
     try {
       await addComplaint({
         location: locationName,
-        locationId: propLocationId || '',
+        locationId: locationId,
         locationName: propLocationName || locationName,
         category: data.category,
         description: data.description,
@@ -176,13 +175,12 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="facilities">Объекты</SelectItem>
+                    <SelectItem value="facilities">Объекты и инфраструктура</SelectItem>
                     <SelectItem value="staff">Персонал</SelectItem>
                     <SelectItem value="equipment">Оборудование</SelectItem>
                     <SelectItem value="cleanliness">Чистота</SelectItem>
                     <SelectItem value="services">Услуги</SelectItem>
                     <SelectItem value="safety">Безопасность</SelectItem>
-                    <SelectItem value="service_quality">Качество обслуживания</SelectItem>
                     <SelectItem value="other">Другое</SelectItem>
                   </SelectContent>
                 </Select>

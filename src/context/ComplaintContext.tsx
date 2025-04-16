@@ -12,7 +12,7 @@ interface ComplaintContextType {
   getComplaintById: (id: string) => Promise<Complaint | null>;
   getComplaintsByLocation: (locationId: string) => Promise<Complaint[]>;
   getComplaintsByCategory: (category: ComplaintCategory) => Complaint[];
-  respondToComplaint: (complaintId: string, response: Omit<Complaint['response'], 'id' | 'created_at'>) => Promise<void>;
+  respondToComplaint: (complaintId: string, response: Omit<ComplaintResponse, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   deleteResponse: (complaintId: string) => Promise<void>;
   deleteComplaint: (complaintId: string) => Promise<void>;
 }
@@ -33,17 +33,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       const { data, error } = await supabase
         .from('complaints')
-        .select(`
-          *,
-          response (
-            id,
-            text,
-            adminName,
-            created_at,
-            updated_at,
-            respondedAt
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       console.log('Supabase response:', { data, error });
@@ -63,28 +53,28 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const formattedData = data.map(complaint => ({
         id: complaint.id,
         category: complaint.category as ComplaintCategory,
-        description: complaint.description,
-        location: complaint.location,
-        locationId: complaint.locationId,
-        locationName: complaint.locationName,
+        description: complaint.description || '',
+        location: complaint.location || '',
+        locationId: complaint.locationId || '',
+        locationName: complaint.locationName || complaint.location || '',
         status: complaint.status as ComplaintStatus,
         created_at: complaint.created_at,
         updated_at: complaint.updated_at,
         response: complaint.response ? {
-          id: complaint.response.id,
+          id: complaint.response.id || '',
+          text: complaint.response.text || '',
           message: complaint.response.text || '',
           adminName: complaint.response.adminName || '',
-          respondedAt: complaint.response.respondedAt || complaint.response.created_at,
-          created_at: complaint.response.created_at,
-          updated_at: complaint.response.updated_at,
-          text: complaint.response.text || ''
+          respondedAt: complaint.response.respondedAt || complaint.response.created_at || complaint.response.updated_at,
+          created_at: complaint.response.created_at || complaint.created_at,
+          updated_at: complaint.response.updated_at || complaint.updated_at
         } : undefined,
-        priority_id: complaint.priority_id,
-        assignee_id: complaint.assignee_id,
+        priority_id: complaint.priority_id || null,
+        assignee_id: complaint.assignee_id || null,
         attachments: Array.isArray(complaint.attachments) ? complaint.attachments : [],
-        contact_email: complaint.contact_email,
-        contact_phone: complaint.contact_phone,
-        user_id: complaint.user_id
+        contact_email: complaint.contact_email || '',
+        contact_phone: complaint.contact_phone || '',
+        user_id: complaint.user_id || ''
       }));
 
       console.log('Formatted complaints data:', formattedData);
@@ -135,6 +125,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updated_at: data.updated_at,
         response: data.response ? {
           id: data.response.id,
+          text: data.response.text || '',
           message: data.response.text || '',
           adminName: data.response.adminName || '',
           respondedAt: data.response.respondedAt || data.response.created_at,
@@ -190,8 +181,11 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         response: data.response ? {
           id: data.response.id,
           text: data.response.text,
+          message: data.response.text,
+          adminName: data.response.adminName,
+          respondedAt: data.response.respondedAt || data.response.created_at,
           created_at: data.response.created_at,
-          respondedAt: data.response.respondedAt || data.response.created_at
+          updated_at: data.response.updated_at
         } : undefined,
         priority_id: data.priority_id,
         assignee_id: data.assignee_id,
@@ -228,12 +222,17 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const respondToComplaint = async (complaintId: string, response: Omit<Complaint['response'], 'id' | 'created_at'>) => {
+  const respondToComplaint = async (complaintId: string, response: Omit<ComplaintResponse, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const responseData = {
-        ...response,
-        created_at: new Date().toISOString(),
-        respondedAt: new Date().toISOString(),
+      const now = new Date().toISOString();
+      const responseData: ComplaintResponse = {
+        id: crypto.randomUUID(),
+        text: response.text,
+        message: response.text,
+        adminName: response.adminName,
+        respondedAt: now,
+        created_at: now,
+        updated_at: now
       };
 
       const { data, error } = await supabase
@@ -241,7 +240,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .update({
           response: responseData,
           status: 'resolved',
-          updated_at: new Date().toISOString(),
+          updated_at: now,
         })
         .eq('id', complaintId)
         .select()
@@ -253,31 +252,35 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         throw new Error('No data returned after response');
       }
 
-      const formattedData = {
+      const formattedData: Complaint = {
         id: data.id,
         category: data.category as ComplaintCategory,
         description: data.description,
         location: data.location,
+        locationId: data.locationId,
+        locationName: data.locationName || data.location,
         status: data.status as ComplaintStatus,
         created_at: data.created_at,
         updated_at: data.updated_at,
-        response: data.response ? {
-          id: data.response.id,
-          text: data.response.text,
-          created_at: data.response.created_at,
-          respondedAt: data.response.respondedAt || data.response.created_at
-        } : undefined,
+        response: responseData,
         priority_id: data.priority_id,
         assignee_id: data.assignee_id,
-        attachments: Array.isArray(data.attachments) ? data.attachments : []
+        attachments: Array.isArray(data.attachments) ? data.attachments : [],
+        contact_email: data.contact_email || '',
+        contact_phone: data.contact_phone || '',
+        user_id: data.user_id || ''
       };
-      
+
       setComplaints(prev => prev.map(c => c.id === complaintId ? formattedData : c));
-      
-      toast.success('Ответ успешно добавлен');
+
+      // Отправляем уведомление в Telegram, если действие выполнено администратором
+      if (localStorage.getItem('isAdmin') === 'true') {
+        await sendTelegramNotification(formattedData, 'updated');
+        toast.success('Ответ успешно отправлен');
+      }
     } catch (error) {
       console.error('Error responding to complaint:', error);
-      toast.error('Ошибка при добавлении ответа');
+      toast.error('Ошибка при отправке ответа');
     }
   };
 
@@ -306,8 +309,11 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         response: data.response ? {
           id: data.response.id,
           text: data.response.text,
+          message: data.response.text,
+          adminName: data.response.adminName,
+          respondedAt: data.response.respondedAt || data.response.created_at,
           created_at: data.response.created_at,
-          respondedAt: data.response.respondedAt || data.response.created_at
+          updated_at: data.response.updated_at
         } : undefined,
         priority_id: data.priority_id,
         assignee_id: data.assignee_id,
@@ -345,8 +351,11 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         response: complaint.response ? {
           id: complaint.response.id,
           text: complaint.response.text,
+          message: complaint.response.text,
+          adminName: complaint.response.adminName,
+          respondedAt: complaint.response.respondedAt || complaint.response.created_at,
           created_at: complaint.response.created_at,
-          respondedAt: complaint.response.respondedAt || complaint.response.created_at
+          updated_at: complaint.response.updated_at
         } : undefined,
         priority_id: complaint.priority_id,
         assignee_id: complaint.assignee_id,
@@ -393,8 +402,11 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         response: data.response ? {
           id: data.response.id,
           text: data.response.text,
+          message: data.response.text,
+          adminName: data.response.adminName,
+          respondedAt: data.response.respondedAt || data.response.created_at,
           created_at: data.response.created_at,
-          respondedAt: data.response.respondedAt || data.response.created_at
+          updated_at: data.response.updated_at
         } : undefined,
         priority_id: data.priority_id,
         assignee_id: data.assignee_id,

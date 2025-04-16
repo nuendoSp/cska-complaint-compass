@@ -16,7 +16,6 @@ const categoryEmojis: Record<ComplaintCategory, string> = {
   cleanliness: '🧹',
   services: '🛎️',
   safety: '🛡️',
-  service_quality: '⭐',
   other: '❓'
 };
 
@@ -197,39 +196,6 @@ export const sendStatusUpdateNotification = async (complaint: Complaint) => {
     return true;
   } catch (error) {
     console.error('Error sending Telegram notification:', error);
-    return false;
-  }
-};
-
-export const testTelegramNotification = async () => {
-  try {
-    const testMessage = `
-<b>🧪 Тестовое сообщение</b>
-
-Это тестовое сообщение для проверки работы уведомлений.
-Время отправки: ${new Date().toLocaleString('ru-RU')}
-    `;
-
-    const response = await fetch(`${TELEGRAM_API_URL}/sendMessage`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: testMessage,
-        parse_mode: 'HTML',
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Failed to send Telegram notification: ${JSON.stringify(errorData)}`);
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error sending test Telegram notification:', error);
     return false;
   }
 }; 

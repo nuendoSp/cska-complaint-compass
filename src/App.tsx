@@ -18,6 +18,7 @@ import ComplaintsListPage from "./pages/ComplaintsListPage";
 import ComplaintDetailPage from "./pages/ComplaintDetailPage";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { toast } from 'sonner';
 
 const queryClient = new QueryClient();
 
@@ -71,12 +72,12 @@ const AppContent = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AppContent />
-    </TooltipProvider>
-  </QueryClientProvider>
-);
-
-export default App;
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AppContent />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
