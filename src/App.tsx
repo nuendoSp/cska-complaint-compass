@@ -13,6 +13,8 @@ import LocationsPage from "./pages/LocationsPage";
 import SuccessPage from "./pages/SuccessPage";
 import AdminPage from "./pages/AdminPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ResetPasswordConfirmationPage from "./pages/ResetPasswordConfirmationPage";
 import NotFound from "./pages/NotFound";
 import ComplaintsListPage from "./pages/ComplaintsListPage";
 import ComplaintDetailPage from "./pages/ComplaintDetailPage";
@@ -46,6 +48,8 @@ const AppContent = () => {
             <Route path="/locations" element={<LocationsPage />} />
             <Route path="/success" element={<SuccessPage />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/admin/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/reset-password-confirmation" element={<ResetPasswordConfirmationPage />} />
             <Route 
               path="/admin/*" 
               element={

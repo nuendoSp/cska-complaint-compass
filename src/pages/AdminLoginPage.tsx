@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -61,18 +61,20 @@ const AdminLoginPage = () => {
                 placeholder="Введите пароль"
                 required
               />
+              <div className="text-right">
+                <Link
+                  to="/admin/reset-password"
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Забыли пароль?
+                </Link>
+              </div>
             </div>
             
             <Button type="submit" className="w-full bg-cska-blue hover:bg-blue-700">
               Войти
             </Button>
           </form>
-
-          <div className="mt-4 text-sm text-gray-500">
-            <p>Тестовые данные для входа:</p>
-            <p>Email: admin@cska.ru</p>
-            <p>Пароль: admin123</p>
-          </div>
         </Card>
       </div>
     </Layout>
