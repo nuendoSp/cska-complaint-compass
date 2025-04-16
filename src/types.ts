@@ -38,7 +38,14 @@ export interface Complaint {
 }
 
 export type ComplaintStatus = 'new' | 'processing' | 'resolved' | 'rejected' | 'in_progress' | 'closed';
-export type ComplaintCategory = 'facilities' | 'staff' | 'equipment' | 'cleanliness' | 'services' | 'safety' | 'service_quality' | 'other';
+export type ComplaintCategory =
+  | 'facilities'
+  | 'staff'
+  | 'equipment'
+  | 'cleanliness'
+  | 'services'
+  | 'safety'
+  | 'other';
 
 export interface ChangeRequest {
   id: string;

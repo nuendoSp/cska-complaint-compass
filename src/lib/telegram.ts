@@ -36,18 +36,25 @@ const getStatusText = (status: ComplaintStatus): string => {
   return statusMap[status];
 };
 
-const getCategoryText = (category: ComplaintCategory): string => {
-  const categoryMap: Record<ComplaintCategory, string> = {
-    facilities: 'Объекты',
-    staff: 'Персонал',
-    equipment: 'Оборудование',
-    cleanliness: 'Чистота',
-    services: 'Услуги',
-    safety: 'Безопасность',
-    service_quality: 'Качество обслуживания',
-    other: 'Другое'
-  };
-  return categoryMap[category];
+export const getCategoryText = (category: ComplaintCategory): string => {
+  switch (category) {
+    case 'facilities':
+      return 'Объекты и инфраструктура';
+    case 'staff':
+      return 'Персонал';
+    case 'equipment':
+      return 'Оборудование';
+    case 'cleanliness':
+      return 'Чистота';
+    case 'services':
+      return 'Услуги';
+    case 'safety':
+      return 'Безопасность';
+    case 'other':
+      return 'Другое';
+    default:
+      return 'Неизвестная категория';
+  }
 };
 
 // Функция для проверки прав администратора
