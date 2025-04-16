@@ -33,7 +33,9 @@ const getStatusText = (status: ComplaintStatus): string => {
     new: 'Новая',
     processing: 'В обработке',
     resolved: 'Решена',
-    rejected: 'Отклонена'
+    rejected: 'Отклонена',
+    in_progress: 'В процессе',
+    closed: 'Закрыта'
   };
   return statusMap[status];
 };
@@ -44,7 +46,14 @@ const getCategoryText = (category: ComplaintCategory): string => {
     team: 'Команда',
     tickets: 'Билеты',
     merchandise: 'Мерч',
-    other: 'Другое'
+    other: 'Другое',
+    facilities: 'Объекты',
+    staff: 'Персонал',
+    equipment: 'Оборудование',
+    cleanliness: 'Чистота',
+    services: 'Услуги',
+    safety: 'Безопасность',
+    service_quality: 'Качество обслуживания'
   };
   return categoryMap[category];
 };
@@ -88,7 +97,7 @@ ${complaint.response ? `\n<b>Ответ администратора:</b>\n${com
   `.trim();
 };
 
-const sendPhotoToTelegram = async (photoUrl: string, caption: string) => {
+export const sendPhotoToTelegram = async (photoUrl: string, caption: string) => {
   try {
     const response = await fetch(`${TELEGRAM_API_URL}/sendPhoto`, {
       method: 'POST',
@@ -123,26 +132,15 @@ export const sendTelegramNotification = async (complaint: Complaint, action: 'cr
     return;
   }
 
-  const statusEmoji = statusEmojis[complaint.status];
-  const categoryEmoji = categoryEmojis[complaint.category];
-
   let message = '';
   if (action === 'created') {
-    message = `🆕 Новая жалоба #${complaint.id}\n\n` +
-      `${categoryEmoji} Категория: ${complaint.category}\n` +
-      `📝 Описание: ${complaint.description}\n` +
-      `📍 Местоположение: ${complaint.location}\n` +
-      `📧 Email: ${complaint.contact_email || 'Не указан'}\n` +
-      `📞 Телефон: ${complaint.contact_phone || 'Не указан'}`;
+    message = formatComplaintMessage(complaint);
   } else if (action === 'updated') {
-    message = `🔄 Обновлена жалоба #${complaint.id}\n\n` +
-      `${statusEmoji} Статус: ${complaint.status}\n` +
-      `${categoryEmoji} Категория: ${complaint.category}\n` +
-      `📝 Описание: ${complaint.description}\n` +
-      `📍 Местоположение: ${complaint.location}`;
+    message = formatStatusUpdateMessage(complaint);
   } else if (action === 'responded' && complaint.response) {
+    const statusEmoji = statusEmojis[complaint.status];
     message = `💬 Ответ на жалобу #${complaint.id}\n\n` +
-      `${statusEmoji} Статус: ${complaint.status}\n` +
+      `${statusEmoji} Статус: ${getStatusText(complaint.status)}\n` +
       `👨‍💼 Администратор: ${complaint.response.adminName}\n` +
       `📝 Ответ: ${complaint.response.message || complaint.response.text}\n` +
       `⏰ Время ответа: ${new Date(complaint.response.respondedAt).toLocaleString()}`;
