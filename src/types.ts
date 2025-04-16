@@ -9,6 +9,7 @@ export interface ComplaintResponse {
   id: string;
   text: string;
   created_at: string;
+  respondedAt: string;
   adminName?: string;
 }
 
@@ -21,6 +22,7 @@ export interface Complaint {
   status: ComplaintStatus;
   created_at: string;
   updated_at: string;
+  submittedAt?: string;
   response?: ComplaintResponse;
   priority_id?: string;
   assignee_id?: string;

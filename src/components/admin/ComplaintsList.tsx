@@ -66,7 +66,7 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
 
   // Sort by date, newest first
   const sortedComplaints = [...filteredComplaints].sort(
-    (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 
   const handleSelectComplaint = (complaintId: string) => {
@@ -170,7 +170,7 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
                         Жалоба #{complaint.id}
                       </CardTitle>
                       <CardDescription>
-                        {format(new Date(complaint.submittedAt), 'dd.MM.yyyy HH:mm')}
+                        {format(new Date(complaint.created_at), 'dd.MM.yyyy HH:mm')}
                       </CardDescription>
                     </div>
                   </div>
@@ -237,8 +237,12 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
                         </Button>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-700">{complaint.response.text}</p>
-                    <p className="text-xs text-gray-500 mt-2">Ответил: {complaint.response.adminName}</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <MessageSquare className="h-4 w-4" />
+                      <span>
+                        Ответ от {complaint.response.adminName} ({format(new Date(complaint.response.created_at), 'dd.MM.yyyy HH:mm')})
+                      </span>
+                    </div>
                   </div>
                 )}
               </CardContent>

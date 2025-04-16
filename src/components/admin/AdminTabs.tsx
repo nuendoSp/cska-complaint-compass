@@ -160,18 +160,15 @@ const AdminTabs: React.FC = () => {
       </div>
       
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="dashboard">Дашборд</TabsTrigger>
           <TabsTrigger value="complaints">Жалобы</TabsTrigger>
           <TabsTrigger value="templates">Шаблоны</TabsTrigger>
-          <TabsTrigger value="priorities">Приоритеты</TabsTrigger>
-          <TabsTrigger value="assignees">Назначения</TabsTrigger>
-          <TabsTrigger value="history">История</TabsTrigger>
-          <TabsTrigger value="surveys">Опросы</TabsTrigger>
+          <TabsTrigger value="settings">Настройки</TabsTrigger>
         </TabsList>
         
         <TabsContent value="dashboard">
-          <Statistics />
+          <Dashboard />
         </TabsContent>
         
         <TabsContent value="complaints">
@@ -195,20 +192,15 @@ const AdminTabs: React.FC = () => {
           <ResponseTemplates />
         </TabsContent>
         
-        <TabsContent value="priorities">
-          <PriorityManager />
-        </TabsContent>
-        
-        <TabsContent value="assignees">
-          <AssigneeManager />
-        </TabsContent>
-        
-        <TabsContent value="history">
-          <ChangeHistory />
-        </TabsContent>
-        
-        <TabsContent value="surveys">
-          <Surveys />
+        <TabsContent value="settings">
+          <div className="space-y-4">
+            <PriorityManager />
+            <AssigneeManager />
+            <ChangeHistory />
+            <FeedbackSystem />
+            <Surveys />
+            <Statistics />
+          </div>
         </TabsContent>
       </Tabs>
 

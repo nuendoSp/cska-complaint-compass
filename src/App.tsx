@@ -16,6 +16,7 @@ import AdminLoginPage from "./pages/AdminLoginPage";
 import NotFound from "./pages/NotFound";
 import ComplaintsListPage from "./pages/ComplaintsListPage";
 import ComplaintDetailPage from "./pages/ComplaintDetailPage";
+import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,14 @@ const AppContent = () => {
               element={
                 <ProtectedRoute>
                   <AdminPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
                 </ProtectedRoute>
               } 
             />
