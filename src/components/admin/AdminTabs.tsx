@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
-import { useComplaints } from '@/context/ComplaintContext';
+import { useComplaintContext } from '@/context/ComplaintContext';
 import { toast } from 'sonner';
 import { Complaint, ComplaintCategory, ComplaintStatus } from '@/types';
 import ComplaintsList from './ComplaintsList';
@@ -34,7 +34,7 @@ import SurveysManager from './SurveysManager';
 
 const AdminTabs: React.FC = () => {
   const navigate = useNavigate();
-  const { complaints, updateComplaint, respondToComplaint, deleteResponse, deleteComplaint } = useComplaints();
+  const { complaints, updateComplaint, respondToComplaint, deleteResponse, deleteComplaint } = useComplaintContext();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<ComplaintCategory | 'all'>('all');

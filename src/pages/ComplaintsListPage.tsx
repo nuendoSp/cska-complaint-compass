@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
-import { useComplaints } from '@/context/ComplaintContext';
+import { useComplaintContext } from '@/context/ComplaintContext';
 import {
   Table,
   TableHeader,
@@ -18,12 +18,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Search, Clock, CheckCircle2, AlertCircle, XCircle, FileText } from 'lucide-react';
 import { Complaint, ComplaintCategory } from '@/types';
 import { format } from 'date-fns';
-import { useComplaintContext } from '../context/ComplaintContext';
 import { formatDate } from '@/lib/utils';
 
 const ComplaintsListPage = () => {
   const navigate = useNavigate();
-  const { complaints, deleteComplaint } = useComplaints();
+  const { complaints, deleteComplaint } = useComplaintContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<ComplaintCategory | 'all'>('all');
   const [filterLocation, setFilterLocation] = useState<string>('all');

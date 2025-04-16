@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Complaint, ComplaintCategory, FileAttachment, ComplaintResponse, ComplaintStatus } from '@/types';
-import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { sendTelegramNotification, sendStatusUpdateNotification } from '@/lib/telegram';
@@ -18,6 +17,14 @@ interface ComplaintContextType {
 }
 
 const ComplaintContext = createContext<ComplaintContextType | undefined>(undefined);
+
+export const useComplaintContext = () => {
+  const context = useContext(ComplaintContext);
+  if (context === undefined) {
+    throw new Error('useComplaintContext must be used within a ComplaintProvider');
+  }
+  return context;
+};
 
 // This would normally connect to an API or database
 export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -225,7 +232,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const respondToComplaint = async (complaintId: string, response: Omit<ComplaintResponse, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const now = new Date().toISOString();
-      const responseData: ComplaintResponse = {
+      const responseData = {
         id: crypto.randomUUID(),
         text: response.text,
         message: response.text,
@@ -233,23 +240,30 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         respondedAt: now,
         created_at: now,
         updated_at: now
-      };
+      } satisfies ComplaintResponse;
 
       const { data, error } = await supabase
         .from('complaints')
         .update({
           response: responseData,
-          status: 'resolved',
+          status: 'resolved' as const,
           updated_at: now,
         })
         .eq('id', complaintId)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error responding to complaint:', error);
+        toast.error('Ошибка при ответе на жалобу');
+        throw error;
+      }
       
       if (!data) {
-        throw new Error('No data returned after response');
+        const noDataError = new Error('No data returned after update');
+        console.error(noDataError);
+        toast.error('Ошибка при обновлении данных');
+        throw noDataError;
       }
 
       const formattedData: Complaint = {
@@ -273,7 +287,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       setComplaints(prev => prev.map(c => c.id === complaintId ? formattedData : c));
 
-      // Отправляем уведомление в Telegram, если действие выполнено администратором
+      // Отправляем уведомление в Telegram только если действие выполнено администратором
       if (localStorage.getItem('isAdmin') === 'true') {
         await sendTelegramNotification(formattedData, 'updated');
         toast.success('Ответ успешно отправлен');
@@ -474,12 +488,4 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       {children}
     </ComplaintContext.Provider>
   );
-};
-
-export const useComplaints = () => {
-  const context = useContext(ComplaintContext);
-  if (context === undefined) {
-    throw new Error('useComplaints must be used within a ComplaintProvider');
-  }
-  return context;
 };

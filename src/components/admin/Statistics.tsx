@@ -2,10 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { Complaint, ComplaintCategory, ComplaintStatus, Statistics } from '@/types';
+import type { Statistics as StatisticsType } from '@/types';
+import { Complaint, ComplaintCategory, ComplaintStatus } from '@/types';
 
-export function StatisticsComponent() {
-  const [statistics, setStatistics] = useState<Statistics | null>(null);
+const categoryTranslations: Record<ComplaintCategory, string> = {
+  facilities: 'Объекты и инфраструктура',
+  staff: 'Персонал',
+  equipment: 'Оборудование',
+  cleanliness: 'Чистота',
+  services: 'Услуги',
+  safety: 'Безопасность',
+  other: 'Другое'
+};
+
+const statusTranslations: Record<ComplaintStatus, string> = {
+  new: 'Новые',
+  processing: 'В обработке',
+  resolved: 'Решенные',
+  rejected: 'Отклоненные',
+  in_progress: 'В процессе',
+  closed: 'Закрытые'
+};
+
+export const Statistics = () => {
+  const [statistics, setStatistics] = useState<StatisticsType | null>(null);
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date()
@@ -82,7 +102,7 @@ export function StatisticsComponent() {
           <ul className="space-y-2">
             {Object.entries(statistics.categoryStats).map(([category, count]) => (
               <li key={category} className="flex justify-between">
-                <span>{category}</span>
+                <span>{categoryTranslations[category as ComplaintCategory]}</span>
                 <span>{count}</span>
               </li>
             ))}
@@ -98,7 +118,7 @@ export function StatisticsComponent() {
           <ul className="space-y-2">
             {Object.entries(statistics.statusStats).map(([status, count]) => (
               <li key={status} className="flex justify-between">
-                <span>{status}</span>
+                <span>{statusTranslations[status as ComplaintStatus]}</span>
                 <span>{count}</span>
               </li>
             ))}

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import * as z from "zod";
-import { useComplaints } from '@/context/ComplaintContext';
+import { useComplaintContext } from '@/context/ComplaintContext';
 import { ComplaintCategory, FileAttachment } from '@/types';
 
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,7 @@ interface ComplaintFormProps {
 const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationId, locationName: propLocationName }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { addComplaint } = useComplaints();
+  const { addComplaint } = useComplaintContext();
   
   const locationName = propLocationName || searchParams.get('locationName') || 'Теннисный центр ЦСКА';
   const locationId = propLocationId || searchParams.get('locationId') || '';
@@ -269,7 +269,8 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
 
           <Button 
             type="submit" 
-            className="w-full bg-cska-blue hover:bg-blue-700"
+            variant="cska"
+            className="w-full"
             disabled={isSubmitting}
           >
             {isSubmitting ? "Отправка..." : "Отправить жалобу"}
