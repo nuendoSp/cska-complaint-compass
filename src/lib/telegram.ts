@@ -134,11 +134,17 @@ export const sendTelegramNotification = async (complaint: Complaint, action: 'cr
     message = `💬 Ответ на жалобу #${complaint.id}\n\n` +
       `${statusEmoji} Статус: ${getStatusText(complaint.status)}\n` +
       `👨‍💼 Администратор: ${complaint.response.adminName}\n` +
-      `📝 Ответ: ${complaint.response.message || complaint.response.text}\n` +
+      `📝 Ответ: ${complaint.response.text}\n` +
       `⏰ Время ответа: ${new Date(complaint.response.respondedAt).toLocaleString()}`;
   }
 
   try {
+    console.log('Sending Telegram notification:', {
+      botToken,
+      chatId,
+      message
+    });
+
     const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       headers: {
@@ -152,8 +158,11 @@ export const sendTelegramNotification = async (complaint: Complaint, action: 'cr
     });
 
     if (!response.ok) {
-      throw new Error(`Telegram API error: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(`Telegram API error: ${JSON.stringify(errorData)}`);
     }
+
+    console.log('Telegram notification sent successfully');
   } catch (error) {
     console.error('Failed to send Telegram notification:', error);
   }

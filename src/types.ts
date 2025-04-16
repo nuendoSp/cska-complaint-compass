@@ -8,12 +8,12 @@ export interface FileAttachment {
 
 export interface ComplaintResponse {
   id: string;
-  message: string;
+  text: string;
+  message?: string;
   adminName: string;
   respondedAt: string;
   created_at: string;
   updated_at: string;
-  text?: string;
 }
 
 export interface Complaint {
