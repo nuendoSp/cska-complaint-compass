@@ -49,10 +49,21 @@ export type ComplaintCategory =
 
 export interface ChangeRequest {
   id: string;
-  title: string;
-  description: string;
+  content_id: string;
+  old_value: string;
+  new_value: string;
   status: 'pending' | 'approved' | 'rejected';
-  content_management: boolean;
+  comment?: string;
+  content_management: {
+    component_name: string;
+    content_key: string;
+  };
   created_at: string;
   updated_at: string;
+}
+
+export interface Statistics {
+  totalComplaints: number;
+  categoryStats: Record<ComplaintCategory, number>;
+  statusStats: Record<ComplaintStatus, number>;
 } 

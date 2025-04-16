@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { useContent } from '@/context/ContentContext';
 import {
   Table,
@@ -18,23 +18,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-
-interface ChangeRequest {
-  id: string;
-  content_id: string;
-  old_value: string;
-  new_value: string;
-  status: 'pending' | 'approved' | 'rejected';
-  comment?: string;
-  content_management: {
-    component_name: string;
-    content_key: string;
-  };
-}
+import { ChangeRequest } from '@/types';
 
 export function ContentChangeRequests() {
   const { getPendingChanges, approveChange, rejectChange } = useContent();
-  const [changes, setChanges] = useState<ChangeRequest[]>([]);
+  const [changeRequests, setChangeRequests] = useState<ChangeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rejectDialog, setRejectDialog] = useState<{ open: boolean; changeId: string | null }>({
@@ -43,22 +31,22 @@ export function ContentChangeRequests() {
   });
   const [rejectComment, setRejectComment] = useState('');
 
-  useEffect(() => {
-    loadChanges();
-  }, []);
-
-  async function loadChanges() {
+  const loadChanges = useCallback(async () => {
     try {
       const pendingChanges = await getPendingChanges();
-      setChanges(pendingChanges);
+      setChangeRequests(pendingChanges);
       setError(null);
-    } catch (err) {
-      console.error('Error loading changes:', err);
+    } catch (error) {
+      console.error('Error loading changes:', error);
       setError('Ошибка при загрузке запросов на изменение');
     } finally {
       setLoading(false);
     }
-  }
+  }, [getPendingChanges]);
+
+  useEffect(() => {
+    loadChanges();
+  }, [loadChanges]);
 
   async function handleApprove(changeId: string) {
     try {
@@ -106,7 +94,7 @@ export function ContentChangeRequests() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {changes.map((change) => (
+          {changeRequests.map((change) => (
             <TableRow key={change.id}>
               <TableCell>{change.content_management.component_name}</TableCell>
               <TableCell>{change.content_management.content_key}</TableCell>
@@ -134,7 +122,7 @@ export function ContentChangeRequests() {
           ))}
         </TableBody>
       </Table>
-      {changes.length === 0 && (
+      {changeRequests.length === 0 && (
         <div className="text-center text-gray-500">
           Нет ожидающих запросов на изменение
         </div>

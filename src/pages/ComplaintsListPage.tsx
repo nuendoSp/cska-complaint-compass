@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
@@ -11,7 +10,7 @@ import {
   TableBody,
   TableCell
 } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -19,19 +18,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Search, Clock, CheckCircle2, AlertCircle, XCircle, FileText } from 'lucide-react';
 import { Complaint, ComplaintCategory } from '@/types';
 import { format } from 'date-fns';
+import { useComplaintContext } from '../context/ComplaintContext';
+import { formatDate } from '@/lib/utils';
 
 const ComplaintsListPage = () => {
   const navigate = useNavigate();
-  const { complaints } = useComplaints();
+  const { complaints, deleteComplaint } = useComplaints();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<ComplaintCategory | 'all'>('all');
   const [filterLocation, setFilterLocation] = useState<string>('all');
+  const [filter, setFilter] = useState<string>('all');
 
   // Get unique locations for filter
   const uniqueLocations = Array.from(new Set(complaints.map(complaint => complaint.locationId)));
 
   // Filter complaints based on search term and filters
-  const filteredComplaints = complaints.filter(complaint => {
+  const filteredComplaints = complaints.filter((complaint: Complaint) => {
     const matchesSearch = 
       complaint.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       complaint.locationName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -43,9 +45,11 @@ const ComplaintsListPage = () => {
   });
 
   // Sort by date, newest first
-  const sortedComplaints = [...filteredComplaints].sort(
-    (a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()
-  );
+  const sortedComplaints = [...filteredComplaints].sort((a: Complaint, b: Complaint) => {
+    const dateA = a.submittedAt ? new Date(a.submittedAt).getTime() : 0;
+    const dateB = b.submittedAt ? new Date(b.submittedAt).getTime() : 0;
+    return dateB - dateA;
+  });
 
   const getStatusBadge = (status: Complaint['status']) => {
     switch (status) {
@@ -75,6 +79,12 @@ const ComplaintsListPage = () => {
         );
       default:
         return <Badge>{status}</Badge>;
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Вы уверены, что хотите удалить эту жалобу?')) {
+      await deleteComplaint(id);
     }
   };
 
@@ -170,12 +180,12 @@ const ComplaintsListPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedComplaints.map((complaint) => (
+                  {sortedComplaints.map((complaint: Complaint) => (
                     <TableRow key={complaint.id}>
                       <TableCell className="whitespace-nowrap">
-                        {format(complaint.submittedAt, 'dd.MM.yyyy')}
+                        {complaint.submittedAt ? formatDate(new Date(complaint.submittedAt)) : 'Не указано'}
                       </TableCell>
-                      <TableCell>{complaint.locationName}</TableCell>
+                      <TableCell>{complaint.locationName || 'Без названия'}</TableCell>
                       <TableCell>{complaint.category}</TableCell>
                       <TableCell>{getStatusBadge(complaint.status)}</TableCell>
                       <TableCell className="max-w-xs truncate">
