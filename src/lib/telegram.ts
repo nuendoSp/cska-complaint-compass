@@ -60,16 +60,16 @@ const formatComplaintMessage = (complaint: Complaint) => {
   const categoryEmoji = categoryEmojis[complaint.category];
 
   return `
-<b>${statusEmoji} Новая жалоба #${complaint.id}</b>
+🔔 <b>Новое обращение #${complaint.id}</b>
 
-<b>Категория:</b> ${categoryEmoji} ${getCategoryText(complaint.category)}
-<b>Описание:</b> ${complaint.description}
-<b>Локация:</b> ${complaint.location}
-<b>Статус:</b> ${getStatusText(complaint.status)}
-<b>Дата создания:</b> ${new Date(complaint.created_at).toLocaleString()}
-${complaint.contact_email ? `<b>Email:</b> ${complaint.contact_email}` : ''}
-${complaint.contact_phone ? `<b>Телефон:</b> ${complaint.contact_phone}` : ''}
-${complaint.attachments?.length ? `\n<b>Вложения:</b> ${complaint.attachments.length}` : ''}
+${categoryEmoji} <b>Категория:</b> ${getCategoryText(complaint.category)}
+📝 <b>Описание:</b> ${complaint.description}
+📍 <b>Локация:</b> ${complaint.location}
+${statusEmoji} <b>Статус:</b> ${getStatusText(complaint.status)}
+⏰ <b>Дата создания:</b> ${new Date(complaint.created_at).toLocaleString('ru-RU')}
+${complaint.contact_email ? `\n📧 <b>Email:</b> ${complaint.contact_email}` : ''}
+${complaint.contact_phone ? `\n📱 <b>Телефон:</b> ${complaint.contact_phone}` : ''}
+${complaint.attachments?.length ? `\n📎 <b>Вложения:</b> ${complaint.attachments.length} файл(ов)` : ''}
   `.trim();
 };
 
@@ -78,14 +78,14 @@ const formatStatusUpdateMessage = (complaint: Complaint) => {
   const categoryEmoji = categoryEmojis[complaint.category];
 
   return `
-<b>${statusEmoji} Обновление статуса жалобы #${complaint.id}</b>
+🔄 <b>Обновление статуса обращения #${complaint.id}</b>
 
-<b>Категория:</b> ${categoryEmoji} ${getCategoryText(complaint.category)}
-<b>Описание:</b> ${complaint.description}
-<b>Локация:</b> ${complaint.location}
-<b>Новый статус:</b> ${getStatusText(complaint.status)}
-<b>Дата обновления:</b> ${new Date(complaint.updated_at).toLocaleString()}
-${complaint.response ? `\n<b>Ответ администратора:</b>\n${complaint.response.text}\n\n<b>Администратор:</b> ${complaint.response.adminName || 'Не указан'}` : ''}
+${categoryEmoji} <b>Категория:</b> ${getCategoryText(complaint.category)}
+📝 <b>Описание:</b> ${complaint.description}
+📍 <b>Локация:</b> ${complaint.location}
+${statusEmoji} <b>Новый статус:</b> ${getStatusText(complaint.status)}
+⏰ <b>Дата обновления:</b> ${new Date(complaint.updated_at).toLocaleString('ru-RU')}
+${complaint.response ? `\n💬 <b>Ответ администратора:</b>\n${complaint.response.text}\n\n👨‍💼 <b>Администратор:</b> ${complaint.response.adminName}` : ''}
   `.trim();
 };
 
@@ -131,11 +131,16 @@ export const sendTelegramNotification = async (complaint: Complaint, action: 'cr
     message = formatStatusUpdateMessage(complaint);
   } else if (action === 'responded' && complaint.response) {
     const statusEmoji = statusEmojis[complaint.status];
-    message = `💬 Ответ на жалобу #${complaint.id}\n\n` +
-      `${statusEmoji} Статус: ${getStatusText(complaint.status)}\n` +
-      `👨‍💼 Администратор: ${complaint.response.adminName}\n` +
-      `📝 Ответ: ${complaint.response.text}\n` +
-      `⏰ Время ответа: ${new Date(complaint.response.respondedAt).toLocaleString()}`;
+    const categoryEmoji = categoryEmojis[complaint.category];
+    message = `
+💬 <b>Ответ на обращение #${complaint.id}</b>
+
+${categoryEmoji} <b>Категория:</b> ${getCategoryText(complaint.category)}
+📝 <b>Описание:</b> ${complaint.description}
+${statusEmoji} <b>Статус:</b> ${getStatusText(complaint.status)}
+👨‍💼 <b>Администратор:</b> ${complaint.response.adminName}
+📋 <b>Ответ:</b> ${complaint.response.text}
+⏰ <b>Время ответа:</b> ${new Date(complaint.response.respondedAt).toLocaleString('ru-RU')}`.trim();
   }
 
   try {
