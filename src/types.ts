@@ -2,48 +2,45 @@ export interface FileAttachment {
   id: string;
   name: string;
   url: string;
-  type: 'image' | 'video';
+  type: string;
+  size: number;
 }
 
 export interface ComplaintResponse {
   id: string;
-  text: string;
-  created_at: string;
+  message: string;
+  adminName: string;
   respondedAt: string;
-  adminName?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Complaint {
   id: string;
-  title?: string;
-  category: ComplaintCategory;
+  title: string;
   description: string;
-  location: string;
   status: ComplaintStatus;
+  category: ComplaintCategory;
+  location: string;
+  locationId: string;
+  locationName: string;
+  submittedAt?: string;
+  attachments?: FileAttachment[];
+  response?: ComplaintResponse;
+  user_id: string;
   created_at: string;
   updated_at: string;
-  submittedAt?: string;
-  response?: ComplaintResponse;
-  priority_id?: string;
-  assignee_id?: string;
-  attachments?: FileAttachment[];
-  contact_email?: string;
-  contact_phone?: string;
 }
 
-export type ComplaintCategory = 
-  | "service_quality"
-  | "facility_issues"
-  | "staff_behavior"
-  | "equipment_problems"
-  | "safety_concerns"
-  | "stadium"
-  | "other";
+export type ComplaintStatus = 'new' | 'processing' | 'resolved' | 'rejected' | 'in_progress' | 'closed';
+export type ComplaintCategory = 'team' | 'tickets' | 'merchandise' | 'facilities' | 'staff' | 'equipment' | 'cleanliness' | 'services' | 'safety' | 'other';
 
-export type ComplaintStatus = 
-  | 'new'
-  | 'in_progress'
-  | 'resolved'
-  | 'closed'
-  | 'processing'
-  | 'rejected'; 
+export interface ChangeRequest {
+  id: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'approved' | 'rejected';
+  content_management: boolean;
+  created_at: string;
+  updated_at: string;
+} 
