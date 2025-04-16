@@ -115,7 +115,7 @@ export const sendPhotoToTelegram = async (photoUrl: string, caption: string) => 
   }
 };
 
-export const sendTelegramNotification = async (complaint: Complaint, action: 'created' | 'updated' | 'responded') => {
+export const sendTelegramNotification = async (complaint: Complaint, action: 'created' | 'updated') => {
   const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
   const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
 
@@ -129,18 +129,6 @@ export const sendTelegramNotification = async (complaint: Complaint, action: 'cr
     message = formatComplaintMessage(complaint);
   } else if (action === 'updated') {
     message = formatStatusUpdateMessage(complaint);
-  } else if (action === 'responded' && complaint.response) {
-    const statusEmoji = statusEmojis[complaint.status];
-    const categoryEmoji = categoryEmojis[complaint.category];
-    message = `
-💬 <b>Ответ на обращение #${complaint.id}</b>
-
-${categoryEmoji} <b>Категория:</b> ${getCategoryText(complaint.category)}
-📝 <b>Описание:</b> ${complaint.description}
-${statusEmoji} <b>Статус:</b> ${getStatusText(complaint.status)}
-👨‍💼 <b>Администратор:</b> ${complaint.response.adminName}
-📋 <b>Ответ:</b> ${complaint.response.text}
-⏰ <b>Время ответа:</b> ${new Date(complaint.response.respondedAt).toLocaleString('ru-RU')}`.trim();
   }
 
   try {

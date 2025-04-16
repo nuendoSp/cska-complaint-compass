@@ -274,11 +274,6 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       setComplaints(prev => prev.map(c => c.id === complaintId ? formattedData : c));
       
-      // Отправляем уведомление об ответе в Telegram только если действие выполнено администратором
-      if (localStorage.getItem('isAdmin') === 'true') {
-        await sendStatusUpdateNotification(formattedData);
-      }
-      
       toast.success('Ответ успешно добавлен');
     } catch (error) {
       console.error('Error responding to complaint:', error);
