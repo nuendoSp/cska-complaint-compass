@@ -47,6 +47,6 @@ export default defineConfig({
       target: 'esnext'
     }
   },
-  base: '/cska-complaint-compass/',
+  base: '/',
   publicDir: 'public'
 });
