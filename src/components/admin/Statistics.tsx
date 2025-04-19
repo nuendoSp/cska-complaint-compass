@@ -87,7 +87,7 @@ export const Statistics = () => {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <Card>
         <CardHeader>
-          <CardTitle>Всего жалоб</CardTitle>
+          <CardTitle>Всего обращений</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{statistics.totalComplaints}</div>
