@@ -217,21 +217,15 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
                 )}
                 
                 {complaint.response && (
-                  <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-100">
-                    <div className="flex justify-between mb-1">
-                      <h4 className="font-medium text-blue-800 flex items-center">
-                        <MessageSquare className="h-4 w-4 mr-1" />
-                        Ответ администратора
-                      </h4>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">
-                          {format(new Date(complaint.response.respondedAt), 'dd.MM.yyyy HH:mm')}
-                        </span>
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="text-sm">{complaint.response.text}</div>
+                      <div>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => onDeleteResponse(complaint.id, complaint.response.id)}
+                          onClick={() => complaint.response && onDeleteResponse(complaint.id, complaint.response.id)}
                         >
                           <XCircle className="h-4 w-4" />
                         </Button>

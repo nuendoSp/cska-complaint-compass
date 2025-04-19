@@ -1,6 +1,6 @@
 import * as React from "react";
 import { CalendarIcon } from "lucide-react";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { ru } from "date-fns/locale";
 
@@ -57,7 +57,11 @@ export function DateRangePicker({
             mode="range"
             defaultMonth={value?.from}
             selected={value}
-            onSelect={onChange}
+            onSelect={(range: DateRange | undefined) => {
+              if (range) {
+                onChange(range);
+              }
+            }}
             numberOfMonths={2}
             locale={ru}
           />

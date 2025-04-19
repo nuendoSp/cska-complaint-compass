@@ -6,6 +6,7 @@ import { sendTelegramNotification, sendStatusUpdateNotification } from '@/lib/te
 
 interface ComplaintContextType {
   complaints: Complaint[];
+  setComplaints: React.Dispatch<React.SetStateAction<Complaint[]>>;
   addComplaint: (complaint: Omit<Complaint, 'id' | 'created_at' | 'updated_at' | 'status'>) => Promise<void>;
   updateComplaint: (id: string, updates: Partial<Complaint>) => Promise<void>;
   getComplaintById: (id: string) => Promise<Complaint | null>;
@@ -475,6 +476,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     <ComplaintContext.Provider
       value={{
         complaints,
+        setComplaints,
         addComplaint,
         updateComplaint,
         getComplaintById,

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DateRangePicker } from '@/components/ui/date-range-picker';
 import type { Statistics as StatisticsType } from '@/types';
 import { Complaint, ComplaintCategory, ComplaintStatus } from '@/types';
 

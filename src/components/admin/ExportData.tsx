@@ -28,7 +28,7 @@ const ExportData: React.FC<ExportDataProps> = ({ complaints }) => {
         complaint.category,
         `"${complaint.description.replace(/"/g, '""')}"`, // Escape quotes
         complaint.status,
-        format(complaint.submittedAt, 'dd.MM.yyyy HH:mm'),
+        complaint.submittedAt ? format(new Date(complaint.submittedAt), 'dd.MM.yyyy HH:mm') : "",
         complaint.response ? `"${complaint.response.text.replace(/"/g, '""')}"` : ""
       ].join(',');
     });

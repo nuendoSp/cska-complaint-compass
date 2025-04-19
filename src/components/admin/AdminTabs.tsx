@@ -6,16 +6,8 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AlertTriangle } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useComplaintContext } from '@/context/ComplaintContext';
 import { toast } from 'sonner';
 import { Complaint, ComplaintCategory, ComplaintStatus } from '@/types';
@@ -28,13 +20,20 @@ import { PriorityManager } from './PriorityManager';
 import { AssigneeManager } from './AssigneeManager';
 import { ChangeHistory } from './ChangeHistory';
 import { FeedbackSystem } from './FeedbackSystem';
-import { Surveys } from './Surveys';
+import { default as SurveysManager } from './SurveysManager';
 import { Statistics } from './Statistics';
-import SurveysManager from './SurveysManager';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const AdminTabs: React.FC = () => {
   const navigate = useNavigate();
-  const { complaints, updateComplaint, respondToComplaint, deleteResponse, deleteComplaint } = useComplaintContext();
+  const { complaints, updateComplaint, respondToComplaint, deleteResponse, deleteComplaint, setComplaints } = useComplaintContext();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<ComplaintCategory | 'all'>('all');
@@ -45,9 +44,9 @@ const AdminTabs: React.FC = () => {
   });
   const [responseText, setResponseText] = useState('');
   const [adminName, setAdminName] = useState('');
-  const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; complaint: Complaint | null }>({
+  const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; complaintId: string }>({
     isOpen: false,
-    complaint: null
+    complaintId: ''
   });
   const [deleteMultipleDialog, setDeleteMultipleDialog] = useState<{ isOpen: boolean; complaintIds: string[] }>({
     isOpen: false,
@@ -62,6 +61,10 @@ const AdminTabs: React.FC = () => {
 
   const handleOpenResponseDialog = (complaint: Complaint) => {
     setSelectedComplaint(complaint);
+    setResponseDialog({
+      isOpen: true,
+      complaintId: complaint.id
+    });
   };
 
   const handleCloseResponseDialog = () => {
@@ -89,19 +92,22 @@ const AdminTabs: React.FC = () => {
     toast.success('Ответ успешно отправлен');
   };
 
-  const handleDeleteResponse = (complaintId: string, responseId: string) => {
-    deleteResponse(complaintId, responseId);
-    toast.success('Ответ успешно удален');
+  const handleDeleteResponse = async (complaintId: string) => {
+    try {
+      await deleteResponse(complaintId);
+      const updatedComplaints = complaints.map(c => 
+        c.id === complaintId ? { ...c, response: undefined } : c
+      );
+      setComplaints(updatedComplaints);
+      toast.success('Ответ успешно удален');
+    } catch (error) {
+      console.error('Error deleting response:', error);
+      toast.error('Ошибка при удалении ответа');
+    }
   };
 
   const handleDeleteComplaint = (complaintId: string) => {
-    const complaint = complaints.find(c => c.id === complaintId);
-    if (complaint) {
-      setDeleteDialog({
-        isOpen: true,
-        complaint
-      });
-    }
+    setDeleteDialog({ isOpen: true, complaintId });
   };
 
   const handleDeleteMultipleComplaints = (complaintIds: string[]) => {
@@ -112,8 +118,8 @@ const AdminTabs: React.FC = () => {
   };
 
   const handleConfirmDelete = async () => {
-    if (deleteDialog.complaint) {
-      await deleteComplaint(deleteDialog.complaint.id);
+    if (deleteDialog.complaintId) {
+      await deleteComplaint(deleteDialog.complaintId);
       handleCloseDeleteDialog();
       toast.success('Жалоба успешно удалена');
     }
@@ -122,7 +128,7 @@ const AdminTabs: React.FC = () => {
   const handleCloseDeleteDialog = () => {
     setDeleteDialog({
       isOpen: false,
-      complaint: null
+      complaintId: ''
     });
   };
 
@@ -231,7 +237,6 @@ const AdminTabs: React.FC = () => {
         setResponseText={setResponseText}
         adminName={adminName}
         setAdminName={setAdminName}
-        complaint={selectedComplaint}
       />
 
       <Dialog open={deleteDialog.isOpen} onOpenChange={handleCloseDeleteDialog}>
