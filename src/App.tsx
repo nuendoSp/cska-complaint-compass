@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HashRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ComplaintProvider } from "@/context/ComplaintContext";
 import { ContentProvider } from "@/context/ContentContext";
 import { createTables } from "@/lib/supabase";
@@ -40,7 +40,7 @@ const AppContent = () => {
       <ContentProvider>
         <Toaster />
         <Sonner />
-        <HashRouter>
+        <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/complaint" element={<ComplaintPage />} />
@@ -69,7 +69,7 @@ const AppContent = () => {
             <Route path="/complaints/:complaintId" element={<ComplaintDetailPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </HashRouter>
+        </BrowserRouter>
       </ContentProvider>
     </ComplaintProvider>
   );
