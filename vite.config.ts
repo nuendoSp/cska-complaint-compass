@@ -47,6 +47,6 @@ export default defineConfig({
       target: 'esnext'
     }
   },
-  base: '/',
+  base: process.env.NODE_ENV === 'production' ? '/' : '/',
   publicDir: 'public'
 });
