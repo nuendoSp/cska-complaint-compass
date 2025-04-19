@@ -10,7 +10,7 @@ export const badgeVariants = {
 
 // Button variants
 export const buttonVariants = cva(
-  "rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -22,9 +22,16 @@ export const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         cska: "bg-cska-blue text-white hover:bg-cska-blue-light shadow-cska",
       },
+      size: {
+        default: "px-4 py-2",
+        sm: "px-3 py-1.5 text-sm",
+        lg: "px-6 py-3",
+        icon: "h-9 w-9",
+      },
     },
     defaultVariants: {
       variant: "default",
+      size: "default",
     },
   }
 );

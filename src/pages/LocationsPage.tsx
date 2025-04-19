@@ -19,7 +19,7 @@ const locations = [
 const LocationsPage = () => {
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto pb-12">
         <h1 className="text-2xl font-bold mb-6 text-center mt-8">Выберите объект</h1>
         <p className="text-gray-600 text-center mb-8">Выберите объект, чтобы создать обращение</p>
         

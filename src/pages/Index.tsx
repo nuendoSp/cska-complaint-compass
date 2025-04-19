@@ -7,7 +7,7 @@ import Layout from '@/components/layout/Layout';
 const Index = () => {
   return (
     <Layout>
-      <div className="flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center justify-center pb-12">
         <div className="text-center mb-12 mt-8">
           <h1 className="text-3xl font-bold mb-4">Книга жалоб и предложений ТЦ "ЦСКА"</h1>
           <p className="text-lg text-gray-600 mb-8">

@@ -14,7 +14,7 @@ const ComplaintPage = () => {
 
   return (
     <Layout>
-      <div className="max-w-2xl mx-auto pt-8">
+      <div className="max-w-2xl mx-auto pt-8 pb-12">
         <div className="flex items-center mb-6">
           <Button 
             variant="ghost" 
