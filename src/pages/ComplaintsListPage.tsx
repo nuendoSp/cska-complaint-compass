@@ -89,7 +89,7 @@ const ComplaintsListPage = () => {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-6xl mx-auto px-4 mt-8">
         <div className="flex items-center mb-6">
           <Button 
             variant="ghost" 
@@ -100,7 +100,7 @@ const ComplaintsListPage = () => {
             <ArrowLeft className="h-4 w-4 mr-1" />
             Назад
           </Button>
-          <h1 className="text-2xl font-bold">Список жалоб и предложений</h1>
+          <h1 className="text-2xl font-bold">Список обращений</h1>
         </div>
 
         {/* Filters */}
@@ -159,12 +159,12 @@ const ComplaintsListPage = () => {
 
         {sortedComplaints.length === 0 ? (
           <Card className="text-center p-10">
-            <p className="text-gray-500">Жалобы и предложения не найдены</p>
+            <p className="text-gray-500">обращения не найдены</p>
           </Card>
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle>Жалобы и предложения</CardTitle>
+              <CardTitle>Обращения</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>

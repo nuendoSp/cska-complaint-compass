@@ -154,7 +154,7 @@ export const FeedbackSystem = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Жалоба</TableHead>
+            <TableHead>Обращение</TableHead>
             <TableHead>Оценка</TableHead>
             <TableHead>Комментарий</TableHead>
             <TableHead>Дата</TableHead>

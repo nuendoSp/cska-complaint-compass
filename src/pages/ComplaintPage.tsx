@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
@@ -15,7 +14,7 @@ const ComplaintPage = () => {
 
   return (
     <Layout>
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto pt-8">
         <div className="flex items-center mb-6">
           <Button 
             variant="ghost" 
@@ -26,7 +25,7 @@ const ComplaintPage = () => {
             <ArrowLeft className="h-4 w-4 mr-1" />
             Назад
           </Button>
-          <h1 className="text-2xl font-bold">Подать жалобу</h1>
+          <h1 className="text-2xl font-bold">Создать обращение</h1>
         </div>
         
         <Card className="p-0 overflow-hidden">

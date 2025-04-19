@@ -9,9 +9,9 @@ const Navbar: React.FC = () => {
     <header className="bg-[#1a365d] text-white shadow-lg">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-6">
             <span className="font-bold text-2xl">ТЦ "ЦСКА"</span>
-            <span className="text-red-500 font-semibold text-lg hidden sm:inline">Книга жалоб и предложений</span>
+            <span className="text-red-500 font-semibold text-lg hidden sm:inline ml-4">Книга жалоб и предложений</span>
           </Link>
           
           {/* Mobile menu */}
@@ -30,10 +30,16 @@ const Navbar: React.FC = () => {
                   Главная
                 </Link>
                 <Link 
+                  to="/locations" 
+                  className="px-4 py-2 hover:bg-gray-100 rounded-md transition-colors"
+                >
+                  Список объектов
+                </Link>
+                <Link 
                   to="/complaints" 
                   className="px-4 py-2 hover:bg-gray-100 rounded-md transition-colors"
                 >
-                  Жалобы и предложения
+                  Обращения
                 </Link>
                 <Link 
                   to="/admin/login" 
@@ -54,10 +60,16 @@ const Navbar: React.FC = () => {
               Главная
             </Link>
             <Link 
+              to="/locations" 
+              className="text-lg hover:text-gray-200 transition-colors font-medium"
+            >
+              Список объектов
+            </Link>
+            <Link 
               to="/complaints" 
               className="text-lg hover:text-gray-200 transition-colors font-medium"
             >
-              Жалобы и предложения
+              Обращения
             </Link>
             <Link 
               to="/admin/login" 

@@ -12,7 +12,6 @@ const Index = () => {
           <h1 className="text-3xl font-bold mb-4">Книга жалоб и предложений ТЦ "ЦСКА"</h1>
           <p className="text-lg text-gray-600 mb-8">
             Помогите нам улучшить качество обслуживания в теннисном центре ЦСКА.
-            Выберите объект из списка, чтобы подать жалобу или сделать предложение.
           </p>
         </div>
 
@@ -24,7 +23,7 @@ const Index = () => {
               </div>
               <h2 className="text-xl font-semibold mb-2">Список объектов</h2>
               <p className="text-gray-500 flex-grow">
-                Выберите объект из списка, чтобы подать жалобу или сделать предложение
+                Выберите объект из списка, чтобы создать обращение
               </p>
               <Button variant="outline" className="mt-4 border-cska-blue text-cska-blue hover:bg-cska-blue hover:text-white w-full">
                 Посмотреть список

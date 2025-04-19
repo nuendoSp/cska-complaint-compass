@@ -78,7 +78,7 @@ export const PriorityManager = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID жалобы</TableHead>
+            <TableHead>ID обращения</TableHead>
             <TableHead>Категория</TableHead>
             <TableHead>Статус</TableHead>
             <TableHead>Приоритет</TableHead>

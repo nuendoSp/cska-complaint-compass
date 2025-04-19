@@ -92,7 +92,7 @@ export const ChangeHistory = () => {
         <TableHeader>
           <TableRow>
             <TableHead>Время</TableHead>
-            <TableHead>Жалоба</TableHead>
+            <TableHead>Обращение</TableHead>
             <TableHead>Поле</TableHead>
             <TableHead>Старое значение</TableHead>
             <TableHead>Новое значение</TableHead>

@@ -147,7 +147,7 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
       
       {sortedComplaints.length === 0 ? (
         <Card className="text-center p-10">
-          <p className="text-gray-500">Жалобы не найдены</p>
+          <p className="text-gray-500">обращения не найдены</p>
         </Card>
       ) : (
         <div className="space-y-4">
@@ -167,7 +167,7 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
                     />
                     <div>
                       <CardTitle className="text-lg">
-                        Жалоба #{complaint.id}
+                        Обращение #{complaint.id}
                       </CardTitle>
                       <CardDescription>
                         {format(new Date(complaint.created_at), 'dd.MM.yyyy HH:mm')}

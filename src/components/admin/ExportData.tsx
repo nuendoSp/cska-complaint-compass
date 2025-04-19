@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -55,7 +54,7 @@ const ExportData: React.FC<ExportDataProps> = ({ complaints }) => {
       <CardHeader>
         <CardTitle>Экспорт данных</CardTitle>
         <CardDescription>
-          Экспортируйте данные о жалобах для отчетности
+          Экспортируйте данные обращений для отчетности
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">

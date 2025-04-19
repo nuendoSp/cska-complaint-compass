@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
@@ -21,7 +20,8 @@ const LocationsPage = () => {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-center">Выберите объект</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center mt-8">Выберите объект</h1>
+        <p className="text-gray-600 text-center mb-8">Выберите объект, чтобы создать обращение</p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {locations.map((location) => (

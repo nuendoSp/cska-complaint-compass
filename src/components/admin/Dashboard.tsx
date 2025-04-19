@@ -87,12 +87,12 @@ export const Dashboard = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-3xl font-bold">Аналитика жалоб</h1>
+      <h1 className="text-3xl font-bold">Аналитика обращений</h1>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Всего жалоб</CardTitle>
+            <CardTitle className="text-sm font-medium">Всего обращений</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{complaints.length}</div>

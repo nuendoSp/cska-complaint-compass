@@ -158,7 +158,7 @@ const AdminTabs: React.FC = () => {
       <Tabs defaultValue="dashboard" className="space-y-4">
         <TabsList>
           <TabsTrigger value="dashboard">Дашборд</TabsTrigger>
-          <TabsTrigger value="complaints">Жалобы</TabsTrigger>
+          <TabsTrigger value="complaints">Обращения</TabsTrigger>
           <TabsTrigger value="surveys">Опросы</TabsTrigger>
           <TabsTrigger value="templates">Шаблоны ответов</TabsTrigger>
           <TabsTrigger value="priorities">Приоритеты</TabsTrigger>

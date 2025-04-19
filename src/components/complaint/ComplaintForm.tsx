@@ -41,6 +41,8 @@ const categories = [
 type FormData = {
   category: ComplaintCategory;
   description: string;
+  contact_phone?: string;
+  contact_email?: string;
 };
 
 const complaintSchema = z.object({
@@ -48,6 +50,12 @@ const complaintSchema = z.object({
   description: z.string().min(10, {
     message: "Описание должно содержать не менее 10 символов.",
   }),
+  contact_phone: z.string().regex(/^\d\(\d{3}\)\d{3} \d{2} \d{2}$/, {
+    message: "Формат телефона: X (XXX) XXX XX XX"
+  }).optional(),
+  contact_email: z.string().email({
+    message: "Введите корректный email"
+  }).optional(),
 });
 
 interface ComplaintFormProps {
@@ -71,6 +79,8 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
     defaultValues: {
       category: "facilities",
       description: "",
+      contact_phone: "",
+      contact_email: "",
     },
   });
 
@@ -138,15 +148,15 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
         category: data.category,
         description: data.description,
         attachments,
-        contact_email: '',
-        contact_phone: ''
+        contact_email: data.contact_email || '',
+        contact_phone: data.contact_phone || ''
       });
       
-      toast.success("Жалоба успешно отправлена");
+      toast.success("Обращение успешно отправлено");
       navigate('/success');
     } catch (error) {
       console.error('Error submitting complaint:', error);
-      toast.error("Произошла ошибка при отправке жалобы");
+      toast.error("Произошла ошибка при отправке обращения");
     } finally {
       setIsSubmitting(false);
     }
@@ -154,7 +164,7 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold mb-2">Оставить жалобу</h2>
+      <h2 className="text-xl font-semibold mb-2">Оставить обращение</h2>
       <p className="text-gray-500 mb-6">Объект: {locationName}</p>
 
       <Form {...form}>
@@ -164,14 +174,14 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Категория жалобы</FormLabel>
+                <FormLabel>Категория обращения</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Выберите категорию жалобы" />
+                      <SelectValue placeholder="Выберите категорию обращения" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -185,7 +195,7 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Укажите, к чему относится ваша жалоба
+                  Укажите, к чему относится ваше обращение
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -200,7 +210,7 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
                 <FormLabel>Описание</FormLabel>
                 <FormControl>
                   <Textarea 
-                    placeholder="Опишите вашу жалобу подробно" 
+                    placeholder="Опишите ваше обращение подробно" 
                     className="min-h-[120px]"
                     {...field} 
                   />
@@ -212,6 +222,57 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
               </FormItem>
             )}
           />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="contact_phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Телефон (необязательно)</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="X (XXX) XXX XX XX"
+                      {...field}
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/\D/g, '');
+                        if (value.length > 0) {
+                          value = value.match(new RegExp('.{1,1}|.{1,3}|.{1,3}|.{1,2}|.{1,2}', 'g'))?.join('') || '';
+                          value = value.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, '$1($2)$3 $4 $5');
+                        }
+                        field.onChange(value);
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Контактный телефон для обратной связи
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="contact_email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email (необязательно)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="example@mail.com"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Email для обратной связи
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <div className="space-y-2">
             <FormLabel htmlFor="attachments">Прикрепить фото/видео</FormLabel>
@@ -273,7 +334,7 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
             className="w-full"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Отправка..." : "Отправить жалобу"}
+            {isSubmitting ? "Отправка..." : "Отправить обращение"}
           </Button>
         </form>
       </Form>
