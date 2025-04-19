@@ -8,8 +8,6 @@
     "build": "tsc && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist",
     "check-deploy": "npm run lint && npm run build && npm run preview",
     "install:legacy": "npm install --legacy-peer-deps"
   },
