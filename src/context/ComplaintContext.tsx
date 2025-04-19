@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Complaint, ComplaintCategory, FileAttachment, ComplaintResponse, ComplaintStatus } from '@/types';
+import { Complaint, ComplaintCategory, ComplaintStatus } from '../types';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { sendTelegramNotification, sendStatusUpdateNotification } from '@/lib/telegram';

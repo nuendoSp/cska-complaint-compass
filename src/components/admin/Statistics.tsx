@@ -25,7 +25,7 @@ const statusTranslations: Record<ComplaintStatus, string> = {
 
 export const Statistics = () => {
   const [statistics, setStatistics] = useState<StatisticsType | null>(null);
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
+  const [dateRange] = useState<{ from: Date; to: Date }>({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date()
   });

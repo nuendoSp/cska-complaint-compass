@@ -52,7 +52,6 @@ const AdminTabs: React.FC = () => {
     isOpen: false,
     complaintIds: []
   });
-  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
 
   const handleUpdateStatus = (id: string, status: Complaint['status']) => {
     updateComplaint(id, { status });
@@ -60,7 +59,6 @@ const AdminTabs: React.FC = () => {
   };
 
   const handleOpenResponseDialog = (complaint: Complaint) => {
-    setSelectedComplaint(complaint);
     setResponseDialog({
       isOpen: true,
       complaintId: complaint.id

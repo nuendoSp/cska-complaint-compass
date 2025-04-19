@@ -19,6 +19,8 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { ChangeRequest } from '@/types';
+import { toast } from 'react-hot-toast';
+import { supabase } from '@/lib/supabase';
 
 export function ContentChangeRequests() {
   const { getPendingChanges, approveChange, rejectChange } = useContent();
@@ -48,15 +50,24 @@ export function ContentChangeRequests() {
     loadChanges();
   }, [loadChanges]);
 
-  async function handleApprove(changeId: string) {
+  const handleApprove = async (id: string) => {
     try {
-      await approveChange(changeId);
-      await loadChanges();
-    } catch (err) {
-      console.error('Error approving change:', err);
-      setError('Ошибка при одобрении изменения');
+      const { error } = await supabase
+        .from('change_requests')
+        .update({ status: 'approved' })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setChangeRequests(prev => prev.map(req => 
+        req.id === id ? { ...req, status: 'approved' } : req
+      ));
+      toast.success('Запрос одобрен');
+    } catch (error) {
+      console.error('Error approving request:', error);
+      toast.error('Ошибка при одобрении запроса');
     }
-  }
+  };
 
   async function handleReject() {
     if (!rejectDialog.changeId || !rejectComment.trim()) return;

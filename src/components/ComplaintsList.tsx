@@ -9,7 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const getStatusColor = (status: ComplaintStatus) => {
   switch (status) {
