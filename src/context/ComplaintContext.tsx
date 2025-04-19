@@ -4,6 +4,16 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { sendTelegramNotification, sendStatusUpdateNotification } from '@/lib/telegram';
 
+interface ComplaintResponse {
+  id: string;
+  text: string;
+  message: string;
+  adminName: string;
+  respondedAt: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface ComplaintContextType {
   complaints: Complaint[];
   setComplaints: React.Dispatch<React.SetStateAction<Complaint[]>>;
@@ -15,6 +25,7 @@ interface ComplaintContextType {
   respondToComplaint: (complaintId: string, response: Omit<ComplaintResponse, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   deleteResponse: (complaintId: string) => Promise<void>;
   deleteComplaint: (complaintId: string) => Promise<void>;
+  handleUpdateStatus: (complaintId: string, status: ComplaintStatus) => Promise<void>;
 }
 
 const ComplaintContext = createContext<ComplaintContextType | undefined>(undefined);
@@ -472,6 +483,23 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const handleUpdateStatus = async (complaintId: string, status: ComplaintStatus) => {
+    try {
+      const { error } = await supabase
+        .from('complaints')
+        .update({ status })
+        .eq('id', complaintId);
+
+      if (error) throw error;
+
+      setComplaints(prev => 
+        prev.map(c => c.id === complaintId ? { ...c, status } : c)
+      );
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  };
+
   return (
     <ComplaintContext.Provider
       value={{
@@ -485,6 +513,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         respondToComplaint,
         deleteResponse,
         deleteComplaint,
+        handleUpdateStatus,
       }}
     >
       {children}

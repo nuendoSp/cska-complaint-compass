@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Tabs,
@@ -31,6 +31,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+interface Response {
+  text: string;
+  adminName: string;
+  respondedAt: string;
+  message: string;
+}
+
+interface ResponseDialog {
+  isOpen: boolean;
+  complaintId?: string;
+}
+
 const AdminTabs: React.FC = () => {
   const navigate = useNavigate();
   const { complaints, updateComplaint, respondToComplaint, deleteResponse, deleteComplaint, setComplaints } = useComplaintContext();
@@ -38,9 +50,9 @@ const AdminTabs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<ComplaintCategory | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<ComplaintStatus | 'all'>('all');
-  const [responseDialog, setResponseDialog] = useState<{ isOpen: boolean; complaintId: string | null }>({
+  const [responseDialog, setResponseDialog] = useState<ResponseDialog>({
     isOpen: false,
-    complaintId: null
+    complaintId: undefined
   });
   const [responseText, setResponseText] = useState('');
   const [adminName, setAdminName] = useState('');
@@ -52,10 +64,33 @@ const AdminTabs: React.FC = () => {
     isOpen: false,
     complaintIds: []
   });
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchComplaints = async () => {
+    try {
+      const response = await fetch('/api/complaints');
+      const data = await response.json();
+      setComplaints(data);
+    } catch (error) {
+      console.error('Error fetching complaints:', error);
+      toast.error('Ошибка при загрузке жалоб');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleUpdateStatus = (id: string, status: Complaint['status']) => {
     updateComplaint(id, { status });
     toast.success('Статус успешно обновлен');
+  };
+
+  const handleStatusChange = async (complaintId: string, status: ComplaintStatus) => {
+    try {
+      await handleUpdateStatus(complaintId, status);
+      await fetchComplaints();
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
   };
 
   const handleOpenResponseDialog = (complaint: Complaint) => {
@@ -68,26 +103,44 @@ const AdminTabs: React.FC = () => {
   const handleCloseResponseDialog = () => {
     setResponseDialog({
       isOpen: false,
-      complaintId: null
+      complaintId: undefined
     });
     setResponseText('');
     setAdminName('');
   };
 
-  const handleSubmitResponse = () => {
+  const handleSubmitResponse = async () => {
     if (!responseDialog.complaintId || !responseText.trim() || !adminName.trim()) {
       toast.error('Пожалуйста, заполните все поля');
       return;
     }
 
-    respondToComplaint(responseDialog.complaintId, {
+    const response: Response = {
       text: responseText,
       adminName,
-      respondedAt: new Date().toISOString()
-    });
+      respondedAt: new Date().toISOString(),
+      message: responseText
+    };
 
-    handleCloseResponseDialog();
-    toast.success('Ответ успешно отправлен');
+    try {
+      await fetch(`/api/complaints/${responseDialog.complaintId}/responses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(response),
+      });
+      
+      const complaintsResponse = await fetch('/api/complaints');
+      const updatedComplaints = await complaintsResponse.json();
+      setComplaints(updatedComplaints);
+      
+      setResponseDialog({ isOpen: false, complaintId: undefined });
+      toast.success('Ответ успешно отправлен');
+    } catch (error) {
+      console.error('Error sending response:', error);
+      toast.error('Ошибка при отправке ответа');
+    }
   };
 
   const handleDeleteResponse = async (complaintId: string) => {
