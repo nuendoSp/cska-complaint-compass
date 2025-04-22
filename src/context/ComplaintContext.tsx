@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Complaint, ComplaintCategory, FileAttachment, ComplaintResponse, ComplaintStatus } from '@/types';
+import { Complaint, ComplaintCategory, ComplaintResponse, ComplaintStatus } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { sendTelegramNotification, sendStatusUpdateNotification } from '@/lib/telegram';
@@ -443,6 +443,12 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const deleteComplaint = async (complaintId: string) => {
     try {
+      // Получаем данные жалобы перед удалением для уведомления
+      const complaint = complaints.find(c => c.id === complaintId);
+      if (!complaint) {
+        throw new Error('Complaint not found');
+      }
+
       const { error } = await supabase
         .from('complaints')
         .delete()
@@ -454,19 +460,12 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       // Отправляем уведомление об удалении жалобы в Telegram только если действие выполнено администратором
       if (localStorage.getItem('isAdmin') === 'true') {
-        await sendTelegramNotification({
-          id: complaintId,
-          description: 'Жалоба была удалена администратором',
-          location: '',
-          category: 'other',
-          status: 'rejected',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
+        await sendTelegramNotification(complaint, 'updated');
       }
       
       toast.success('Жалоба успешно удалена');
     } catch (error) {
+      console.error('Error deleting complaint:', error);
       toast.error('Ошибка при удалении жалобы');
     }
   };

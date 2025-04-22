@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DateRangePicker } from '@/components/ui/date-range-picker';
 import type { Statistics as StatisticsType } from '@/types';
 import { Complaint, ComplaintCategory, ComplaintStatus } from '@/types';
 
@@ -26,8 +25,8 @@ const statusTranslations: Record<ComplaintStatus, string> = {
 
 export const Statistics = () => {
   const [statistics, setStatistics] = useState<StatisticsType | null>(null);
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
-    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+  const [dateRange] = useState<{ from: Date; to: Date }>({
+    from: new Date(new Date().setDate(new Date().getDate() - 7)),
     to: new Date()
   });
 

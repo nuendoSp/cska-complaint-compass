@@ -1,4 +1,3 @@
-import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import ComplaintForm from '@/components/complaint/ComplaintForm';

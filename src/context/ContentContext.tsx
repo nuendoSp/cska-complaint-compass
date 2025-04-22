@@ -1,14 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext } from 'react';
 import { supabase } from '@/lib/supabase';
-
-interface ContentItem {
-  id: string;
-  component_name: string;
-  content_key: string;
-  content_value: string;
-  requires_approval: boolean;
-  is_approved: boolean;
-}
 
 interface ChangeRequest {
   id: string;

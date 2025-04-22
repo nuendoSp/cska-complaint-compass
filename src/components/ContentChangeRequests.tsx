@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useContent } from '@/context/ContentContext';
 import {
   Table,
@@ -34,7 +34,7 @@ export function ContentChangeRequests() {
   const loadChanges = useCallback(async () => {
     try {
       const pendingChanges = await getPendingChanges();
-      setChangeRequests(pendingChanges);
+      setChangeRequests(pendingChanges as ChangeRequest[]);
       setError(null);
     } catch (error) {
       console.error('Error loading changes:', error);

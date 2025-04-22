@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { SelectItem } from '@/components/ui/select';
 
 const getStatusColor = (status: ComplaintStatus) => {
   switch (status) {

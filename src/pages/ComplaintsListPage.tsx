@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useComplaintContext } from '@/context/ComplaintContext';
@@ -10,23 +9,22 @@ import {
   TableBody,
   TableCell
 } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Search, Clock, CheckCircle2, AlertCircle, XCircle, FileText } from 'lucide-react';
 import { Complaint, ComplaintCategory } from '@/types';
-import { format } from 'date-fns';
 import { formatDate } from '@/lib/utils';
+import { useState } from 'react';
 
 const ComplaintsListPage = () => {
   const navigate = useNavigate();
-  const { complaints, deleteComplaint } = useComplaintContext();
+  const { complaints } = useComplaintContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<ComplaintCategory | 'all'>('all');
   const [filterLocation, setFilterLocation] = useState<string>('all');
-  const [filter, setFilter] = useState<string>('all');
 
   // Get unique locations for filter
   const uniqueLocations = Array.from(new Set(complaints.map(complaint => complaint.locationId)));
@@ -35,7 +33,7 @@ const ComplaintsListPage = () => {
   const filteredComplaints = complaints.filter((complaint: Complaint) => {
     const matchesSearch = 
       complaint.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      complaint.locationName.toLowerCase().includes(searchTerm.toLowerCase());
+      (complaint.locationName || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = filterCategory === 'all' || complaint.category === filterCategory;
     const matchesLocation = filterLocation === 'all' || complaint.locationId === filterLocation;
@@ -78,12 +76,6 @@ const ComplaintsListPage = () => {
         );
       default:
         return <Badge>{status}</Badge>;
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Вы уверены, что хотите удалить эту жалобу?')) {
-      await deleteComplaint(id);
     }
   };
 
@@ -147,7 +139,7 @@ const ComplaintsListPage = () => {
                 {uniqueLocations.map((locationId) => {
                   const complaint = complaints.find(c => c.locationId === locationId);
                   return (
-                    <SelectItem key={locationId} value={locationId}>
+                    <SelectItem key={locationId} value={locationId || ''}>
                       {complaint?.locationName || locationId}
                     </SelectItem>
                   );

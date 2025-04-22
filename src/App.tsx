@@ -20,7 +20,6 @@ import ComplaintsListPage from "./pages/ComplaintsListPage";
 import ComplaintDetailPage from "./pages/ComplaintDetailPage";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { toast } from 'sonner';
 
 const queryClient = new QueryClient();
 

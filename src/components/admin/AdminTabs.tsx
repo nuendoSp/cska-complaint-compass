@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AlertTriangle } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useComplaintContext } from '@/context/ComplaintContext';
 import { toast } from 'sonner';
 import { Complaint, ComplaintCategory, ComplaintStatus } from '@/types';
@@ -28,7 +28,6 @@ import { PriorityManager } from './PriorityManager';
 import { AssigneeManager } from './AssigneeManager';
 import { ChangeHistory } from './ChangeHistory';
 import { FeedbackSystem } from './FeedbackSystem';
-import { Surveys } from './Surveys';
 import { Statistics } from './Statistics';
 import SurveysManager from './SurveysManager';
 
@@ -53,7 +52,6 @@ const AdminTabs: React.FC = () => {
     isOpen: false,
     complaintIds: []
   });
-  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
 
   const handleUpdateStatus = (id: string, status: Complaint['status']) => {
     updateComplaint(id, { status });
@@ -61,7 +59,10 @@ const AdminTabs: React.FC = () => {
   };
 
   const handleOpenResponseDialog = (complaint: Complaint) => {
-    setSelectedComplaint(complaint);
+    setResponseDialog({
+      isOpen: true,
+      complaintId: complaint.id
+    });
   };
 
   const handleCloseResponseDialog = () => {
@@ -89,8 +90,8 @@ const AdminTabs: React.FC = () => {
     toast.success('Ответ успешно отправлен');
   };
 
-  const handleDeleteResponse = (complaintId: string, responseId: string) => {
-    deleteResponse(complaintId, responseId);
+  const handleDeleteResponse = (complaintId: string) => {
+    deleteResponse(complaintId);
     toast.success('Ответ успешно удален');
   };
 
@@ -231,7 +232,6 @@ const AdminTabs: React.FC = () => {
         setResponseText={setResponseText}
         adminName={adminName}
         setAdminName={setAdminName}
-        complaint={selectedComplaint}
       />
 
       <Dialog open={deleteDialog.isOpen} onOpenChange={handleCloseDeleteDialog}>

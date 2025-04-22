@@ -231,7 +231,7 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
                           variant="ghost"
                           size="sm"
                           className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => onDeleteResponse(complaint.id, complaint.response.id)}
+                          onClick={() => onDeleteResponse(complaint.id, complaint.response?.id || '')}
                         >
                           <XCircle className="h-4 w-4" />
                         </Button>
