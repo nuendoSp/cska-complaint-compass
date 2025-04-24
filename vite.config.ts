@@ -12,7 +12,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: false,
     minify: 'terser',
     terserOptions: {
       compress: {
@@ -36,12 +36,28 @@ export default defineConfig({
     port: 5173,
     open: true,
     host: true,
-    strictPort: true
+    strictPort: true,
+    hmr: {
+      overlay: false
+    },
+    watch: {
+      usePolling: false,
+      interval: 100
+    }
   },
   optimizeDeps: {
     esbuildOptions: {
       target: 'esnext'
-    }
+    },
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@supabase/supabase-js',
+      'zod',
+      'react-hook-form',
+      '@hookform/resolvers'
+    ]
   },
   base: '/',
   publicDir: 'public'

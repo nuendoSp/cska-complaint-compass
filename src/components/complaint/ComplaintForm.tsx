@@ -38,15 +38,8 @@ const categories = [
   "other"
 ] as const;
 
-type FormData = {
-  category: ComplaintCategory;
-  description: string;
-  contact_phone?: string;
-  contact_email?: string;
-};
-
 const complaintSchema = z.object({
-  category: z.enum(categories) as z.ZodType<ComplaintCategory>,
+  category: z.enum(categories),
   description: z.string().min(10, {
     message: "Описание должно содержать не менее 10 символов.",
   }),
@@ -57,6 +50,8 @@ const complaintSchema = z.object({
     message: "Введите корректный email"
   }).optional(),
 });
+
+type FormData = z.infer<typeof complaintSchema>;
 
 interface ComplaintFormProps {
   locationId?: string;
@@ -328,14 +323,22 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
             )}
           </div>
 
-          <Button 
-            type="submit" 
-            variant="cska"
-            className="w-full"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Отправка..." : "Отправить обращение"}
-          </Button>
+          <div className="flex justify-end">
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="loading loading-spinner loading-sm mr-2"></span>
+                  Отправка...
+                </>
+              ) : (
+                'Отправить обращение'
+              )}
+            </Button>
+          </div>
         </form>
       </Form>
     </div>

@@ -32,16 +32,9 @@ const ComplaintsListPage = () => {
   const uniqueLocations = Array.from(new Set(complaints.map(complaint => complaint.locationId)));
 
   // Filter complaints based on search term and filters
-  const filteredComplaints = complaints.filter((complaint: Complaint) => {
-    const matchesSearch = 
-      complaint.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      complaint.locationName.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = filterCategory === 'all' || complaint.category === filterCategory;
-    const matchesLocation = filterLocation === 'all' || complaint.locationId === filterLocation;
-    
-    return matchesSearch && matchesCategory && matchesLocation;
-  });
+  const filteredComplaints = complaints.filter(complaint => 
+    (complaint.locationName || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Sort by date, newest first
   const sortedComplaints = [...filteredComplaints].sort((a: Complaint, b: Complaint) => {
