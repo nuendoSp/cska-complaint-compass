@@ -16,7 +16,7 @@ export default defineConfig({
     minify: 'terser',
     assetsInlineLimit: 0,
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2000,
     terserOptions: {
       compress: {
         drop_console: true,
@@ -87,5 +87,11 @@ export default defineConfig({
   },
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+  },
+  esbuild: {
+    target: 'esnext',
+    supported: {
+      'top-level-await': true
+    }
   }
 });
