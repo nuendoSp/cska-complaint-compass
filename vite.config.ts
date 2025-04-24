@@ -16,6 +16,7 @@ export default defineConfig({
     minify: 'terser',
     assetsInlineLimit: 0,
     cssCodeSplit: true,
+    chunkSizeWarningLimit: 1000,
     terserOptions: {
       compress: {
         drop_console: true,
@@ -29,7 +30,17 @@ export default defineConfig({
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
-        manualChunks: undefined
+        manualChunks: {
+          'vendor': [
+            'react',
+            'react-dom',
+            'react-router-dom',
+            '@supabase/supabase-js',
+            'zod',
+            'react-hook-form',
+            '@hookform/resolvers'
+          ]
+        }
       },
       input: {
         main: path.resolve(__dirname, 'index.html')
