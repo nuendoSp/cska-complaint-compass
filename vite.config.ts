@@ -70,5 +70,8 @@ export default defineConfig({
       return `/${filename}`;
     }
   },
-  appType: 'spa'
+  appType: 'spa',
+  ssr: {
+    noExternal: true
+  }
 });
