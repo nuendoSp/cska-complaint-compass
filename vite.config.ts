@@ -41,9 +41,6 @@ export default defineConfig({
             '@hookform/resolvers'
           ]
         }
-      },
-      input: {
-        main: path.resolve(__dirname, 'index.html')
       }
     }
   },
@@ -54,10 +51,6 @@ export default defineConfig({
     strictPort: true,
     hmr: {
       overlay: false
-    },
-    watch: {
-      usePolling: false,
-      interval: 100
     }
   },
   optimizeDeps: {
@@ -74,24 +67,7 @@ export default defineConfig({
       '@hookform/resolvers'
     ]
   },
-  base: '/',
+  base: './',
   publicDir: 'public',
-  experimental: {
-    renderBuiltUrl(filename, { hostType, type, hostId }) {
-      return `/${filename}`;
-    }
-  },
-  appType: 'spa',
-  ssr: {
-    noExternal: true
-  },
-  define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
-  },
-  esbuild: {
-    target: 'esnext',
-    supported: {
-      'top-level-await': true
-    }
-  }
+  appType: 'spa'
 });
