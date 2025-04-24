@@ -99,5 +99,6 @@ export default defineConfig({
     renderBuiltUrl(filename, { hostType, type, hostId }) {
       return `/${filename}`;
     }
-  }
+  },
+  appType: 'spa'
 });
