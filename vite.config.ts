@@ -16,6 +16,9 @@ export default defineConfig({
     minify: false,
     cssCodeSplit: true,
     rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html')
+      },
       output: {
         manualChunks: {
           'vendor': [
@@ -41,6 +44,6 @@ export default defineConfig({
     open: true,
     host: true
   },
-  base: '/',
+  base: '',
   appType: 'spa'
 });
