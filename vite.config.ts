@@ -94,5 +94,10 @@ export default defineConfig({
     ]
   },
   base: '/',
-  publicDir: 'public'
+  publicDir: 'public',
+  experimental: {
+    renderBuiltUrl(filename, { hostType, type, hostId }) {
+      return `/${filename}`;
+    }
+  }
 });
