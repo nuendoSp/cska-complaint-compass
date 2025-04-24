@@ -86,7 +86,9 @@ export default defineConfig({
     noExternal: true
   },
   define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+    'window.ethereum': 'undefined',
+    'window.BinanceChain': 'undefined'
   },
   esbuild: {
     target: 'esnext',
