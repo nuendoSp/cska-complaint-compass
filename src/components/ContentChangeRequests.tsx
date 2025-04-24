@@ -34,7 +34,15 @@ export function ContentChangeRequests() {
   const loadChanges = useCallback(async () => {
     try {
       const pendingChanges = await getPendingChanges();
-      setChangeRequests(pendingChanges);
+      setChangeRequests(pendingChanges.map(change => ({
+        ...change,
+        content_management: change.content_management || {
+          component_name: '',
+          content_key: ''
+        },
+        created_at: change.created_at || new Date().toISOString(),
+        updated_at: change.updated_at || new Date().toISOString()
+      })));
       setError(null);
     } catch (error) {
       console.error('Error loading changes:', error);

@@ -12,6 +12,8 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    assetsDir: 'assets',
+    emptyOutDir: true,
     sourcemap: true,
     minify: false,
     cssCodeSplit: true,
@@ -30,7 +32,10 @@ export default defineConfig({
             'react-hook-form',
             '@hookform/resolvers'
           ]
-        }
+        },
+        entryFileNames: `assets/[name].js`,
+        chunkFileNames: `assets/[name].js`,
+        assetFileNames: `assets/[name].[ext]`
       }
     }
   },
@@ -44,6 +49,5 @@ export default defineConfig({
     open: true,
     host: true
   },
-  base: '',
-  appType: 'spa'
+  base: '/'
 });

@@ -30,6 +30,20 @@ export interface Complaint {
   contact_phone?: string;
 }
 
+export interface ContentManagement {
+  component_name: string;
+  content_key: string;
+}
+
+export interface ChangeRequest {
+  id: string;
+  content_management: ContentManagement;
+  old_value: string;
+  new_value: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ComplaintContextType {
   complaints: Complaint[];
   addComplaint: (complaint: Omit<Complaint, 'id' | 'submittedAt' | 'updatedAt'>) => Promise<void>;

@@ -89,8 +89,8 @@ const AdminTabs: React.FC = () => {
     toast.success('Ответ успешно отправлен');
   };
 
-  const handleDeleteResponse = (complaintId: string, responseId: string) => {
-    deleteResponse(complaintId, responseId);
+  const handleDeleteResponse = (complaintId: string) => {
+    deleteResponse(complaintId);
     toast.success('Ответ успешно удален');
   };
 
@@ -231,7 +231,6 @@ const AdminTabs: React.FC = () => {
         setResponseText={setResponseText}
         adminName={adminName}
         setAdminName={setAdminName}
-        complaint={selectedComplaint}
       />
 
       <Dialog open={deleteDialog.isOpen} onOpenChange={handleCloseDeleteDialog}>
