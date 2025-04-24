@@ -12,24 +12,11 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false,
-    minify: 'terser',
-    assetsInlineLimit: 0,
+    sourcemap: true,
+    minify: false,
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 2000,
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info', 'console.debug'],
-      },
-    },
     rollupOptions: {
       output: {
-        format: 'es',
-        entryFileNames: 'assets/[name]-[hash].js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]',
         manualChunks: {
           'vendor': [
             'react',
@@ -47,33 +34,13 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
-    host: true,
-    strictPort: true,
-    hmr: {
-      overlay: false
-    }
+    host: true
   },
-  optimizeDeps: {
-    esbuildOptions: {
-      target: 'esnext'
-    },
-    include: [
-      'react',
-      'react-dom',
-      'react-router-dom',
-      '@supabase/supabase-js',
-      'zod',
-      'react-hook-form',
-      '@hookform/resolvers'
-    ]
+  preview: {
+    port: 4173,
+    open: true,
+    host: true
   },
-  base: './',
-  publicDir: 'public',
-  appType: 'spa',
-  define: {
-    __DEFINES__: JSON.stringify({
-      __VUE_OPTIONS_API__: true,
-      __VUE_PROD_DEVTOOLS__: false
-    })
-  }
+  base: '/',
+  appType: 'spa'
 });
