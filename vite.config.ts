@@ -69,5 +69,11 @@ export default defineConfig({
   },
   base: './',
   publicDir: 'public',
-  appType: 'spa'
+  appType: 'spa',
+  define: {
+    __DEFINES__: JSON.stringify({
+      __VUE_OPTIONS_API__: true,
+      __VUE_PROD_DEVTOOLS__: false
+    })
+  }
 });
