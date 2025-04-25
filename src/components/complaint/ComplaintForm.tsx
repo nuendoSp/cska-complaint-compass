@@ -43,12 +43,8 @@ const complaintSchema = z.object({
   description: z.string().min(10, {
     message: "Описание должно содержать не менее 10 символов.",
   }),
-  contact_phone: z.string().regex(/^\d\(\d{3}\)\d{3} \d{2} \d{2}$/, {
-    message: "Формат телефона: X (XXX) XXX XX XX"
-  }).optional(),
-  contact_email: z.string().email({
-    message: "Введите корректный email"
-  }).optional(),
+  contact_phone: z.any(),
+  contact_email: z.any(),
 });
 
 type FormData = z.infer<typeof complaintSchema>;
