@@ -171,3 +171,47 @@
 .shadow-cska {
   box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.1), 0 2px 4px -1px rgba(30, 58, 138, 0.06);
 }
+
+[data-sonner-toast][data-swiped=true] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Добавляем стили для кнопок */
+button[aria-haspopup="dialog"] {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button[aria-haspopup="dialog"]::before {
+  content: "Меню";
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Добавляем стили для комбобоксов */
+button[role="combobox"] {
+  position: relative;
+}
+
+button[role="combobox"]::before {
+  content: attr(aria-label);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

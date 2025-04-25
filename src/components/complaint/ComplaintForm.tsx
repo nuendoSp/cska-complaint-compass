@@ -223,13 +223,16 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
                   <FormLabel>Телефон (необязательно)</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="X (XXX) XXX XX XX"
+                      placeholder="+7 (XXX) XXX XX XX"
                       {...field}
                       onChange={(e) => {
                         let value = e.target.value.replace(/\D/g, '');
                         if (value.length > 0) {
+                          if (!value.startsWith('7')) {
+                            value = '7' + value;
+                          }
                           value = value.match(new RegExp('.{1,1}|.{1,3}|.{1,3}|.{1,2}|.{1,2}', 'g'))?.join('') || '';
-                          value = value.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, '$1($2)$3 $4 $5');
+                          value = value.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, '+$1($2)$3 $4 $5');
                         }
                         field.onChange(value);
                       }}
