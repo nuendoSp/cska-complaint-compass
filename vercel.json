@@ -10,7 +10,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.telegram.org; frame-ancestors 'none';"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.telegram.org wss://*.supabase.co; frame-ancestors 'none'; font-src 'self' data:;"
         },
         {
           "key": "X-Content-Type-Options",
@@ -23,6 +23,18 @@
         {
           "key": "X-XSS-Protection",
           "value": "1; mode=block"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Authorization"
         }
       ]
     }
@@ -56,5 +68,11 @@
         "cache-control": "public, max-age=0, must-revalidate"
       }
     }
-  ]
+  ],
+  "env": {
+    "VITE_TELEGRAM_BOT_TOKEN": "7946049113:AAFtcEqrsJ2GSeJO7BY-NhPkLvU_WfR5aqg",
+    "VITE_TELEGRAM_CHAT_ID": "564786163",
+    "VITE_SUPABASE_URL": "https://mlabfssqfvufipwvegpe.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sYWJmc3NxZnZ1Zmlwd3ZlZ3BlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQzMDc4MTIsImV4cCI6MjA1OTg4MzgxMn0.tUsDFlR5lrdXf-RsQvhnU4x5fsKvtIU9xrxiedVLSK4"
+  }
 } 
