@@ -19,8 +19,8 @@ const categoryEmojis: Record<ComplaintCategory, string> = {
   other: '❓'
 };
 
-const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID;
+const TELEGRAM_BOT_TOKEN = '7946049113:AAFtcEqrsJ2GSeJO7BY-NhPkLvU_WfR5aqg';
+const TELEGRAM_CHAT_ID = '564786163';
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
 const getStatusText = (status: ComplaintStatus): string => {
@@ -122,61 +122,11 @@ export const sendPhotoToTelegram = async (photoUrl: string, caption: string) => 
 };
 
 export const sendTelegramNotification = async (complaint: Complaint, action: 'created' | 'updated') => {
-  const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-  const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
-
-  if (!botToken || !chatId) {
-    console.error('Telegram credentials not configured');
-    return;
-  }
-
-  let message = '';
-  if (action === 'created') {
-    message = formatComplaintMessage(complaint);
-  } else if (action === 'updated') {
-    message = formatStatusUpdateMessage(complaint);
-  }
-
   try {
-    console.log('Sending Telegram notification:', {
-      botToken,
-      chatId,
-      message
-    });
+    const message = action === 'created' 
+      ? formatComplaintMessage(complaint)
+      : formatStatusUpdateMessage(complaint);
 
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: 'HTML'
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Telegram API error: ${JSON.stringify(errorData)}`);
-    }
-
-    console.log('Telegram notification sent successfully');
-  } catch (error) {
-    console.error('Failed to send Telegram notification:', error);
-  }
-};
-
-export const sendStatusUpdateNotification = async (complaint: Complaint) => {
-  // Проверяем, является ли пользователь администратором
-  if (!isAdmin()) {
-    console.log('Уведомление не отправлено: пользователь не является администратором');
-    return false;
-  }
-
-  try {
-    const message = formatStatusUpdateMessage(complaint);
-    
     const response = await fetch(`${TELEGRAM_API_URL}/sendMessage`, {
       method: 'POST',
       headers: {
@@ -185,17 +135,19 @@ export const sendStatusUpdateNotification = async (complaint: Complaint) => {
       body: JSON.stringify({
         chat_id: TELEGRAM_CHAT_ID,
         text: message,
-        parse_mode: 'HTML',
-      }),
+        parse_mode: 'HTML'
+      })
     });
 
     if (!response.ok) {
-      throw new Error('Failed to send Telegram notification');
+      const errorData = await response.json();
+      console.error('Telegram API error:', errorData);
+      return false;
     }
 
     return true;
   } catch (error) {
-    console.error('Error sending Telegram notification:', error);
+    console.error('Failed to send Telegram notification:', error);
     return false;
   }
 }; 

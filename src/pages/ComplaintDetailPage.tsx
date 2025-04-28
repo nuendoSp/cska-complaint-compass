@@ -6,6 +6,24 @@ import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
 import { Complaint } from '@/types';
 
+const statusRu: Record<string, string> = {
+  new: 'Новая',
+  processing: 'В обработке',
+  resolved: 'Решено',
+  rejected: 'Отклонено',
+  in_progress: 'В процессе',
+  closed: 'Закрыта',
+};
+const categoryRu: Record<string, string> = {
+  facilities: 'Объекты и инфраструктура',
+  staff: 'Персонал',
+  equipment: 'Оборудование',
+  cleanliness: 'Чистота',
+  services: 'Услуги',
+  safety: 'Безопасность',
+  other: 'Другое',
+};
+
 export default function ComplaintDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { getComplaintById } = useComplaintContext();
@@ -17,6 +35,7 @@ export default function ComplaintDetailPage() {
       if (id) {
         try {
           const result = await getComplaintById(id);
+          console.log('Complaint by id:', result);
           if (result) {
             setComplaint(result);
           }
@@ -54,15 +73,15 @@ export default function ComplaintDetailPage() {
           </div>
           <div>
             <h3 className="font-semibold">Статус</h3>
-            <Badge>{complaint.status}</Badge>
+            <Badge>{statusRu[complaint.status] || complaint.status}</Badge>
           </div>
           <div>
             <h3 className="font-semibold">Категория</h3>
-            <Badge variant="outline">{complaint.category}</Badge>
+            <Badge variant="outline">{categoryRu[complaint.category] || complaint.category}</Badge>
           </div>
           <div>
             <h3 className="font-semibold">Дата подачи</h3>
-            <p>{complaint.submittedAt ? formatDate(new Date(complaint.submittedAt)) : 'Не указано'}</p>
+            <p>{formatDate(new Date(complaint.submittedAt || complaint.created_at || Date.now()))}</p>
           </div>
           <div>
             <h3 className="font-semibold">Описание</h3>

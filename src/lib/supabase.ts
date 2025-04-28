@@ -1,91 +1,68 @@
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/supabase';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = 'https://mlabfssqfvufipwvegpe.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sYWJmc3NxZnZ1Zmlwd3ZlZ3BlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQzMDc4MTIsImV4cCI6MjA1OTg4MzgxMn0.tUsDFlR5lrdXf-RsQvhnU4x5fsKvtIU9xrxiedVLSK4';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
 
-export const createTables = async () => {
+export const checkTables = async () => {
   try {
-    // Создаем перечисления для статусов и категорий
-    await supabase.rpc('create_complaint_enums', {});
-
-    // Создаем таблицу complaints
+    // Проверяем существование таблицы complaints
     const { error: complaintsError } = await supabase
       .from('complaints')
-      .select()
+      .select('*')
       .limit(1);
 
-    if (complaintsError && complaintsError.code === '42P01') {
-      const { error } = await supabase.rpc('create_complaints_table', {});
-      if (error) throw error;
-      console.log('Таблица complaints создана успешно');
+    if (complaintsError) {
+      console.error('Ошибка при проверке таблицы complaints:', complaintsError);
     }
 
-    // Создаем таблицу priorities
+    // Проверяем существование остальных таблиц
     const { error: prioritiesError } = await supabase
       .from('priorities')
-      .select()
+      .select('*')
       .limit(1);
 
-    if (prioritiesError && prioritiesError.code === '42P01') {
-      const { error } = await supabase.rpc('create_priorities_table', {});
-      if (error) throw error;
-      console.log('Таблица priorities создана успешно');
+    if (prioritiesError) {
+      console.error('Ошибка при проверке таблицы priorities:', prioritiesError);
     }
 
-    // Создаем таблицу assignees
     const { error: assigneesError } = await supabase
       .from('assignees')
-      .select()
+      .select('*')
       .limit(1);
 
-    if (assigneesError && assigneesError.code === '42P01') {
-      const { error } = await supabase.rpc('create_assignees_table', {});
-      if (error) throw error;
-      console.log('Таблица assignees создана успешно');
+    if (assigneesError) {
+      console.error('Ошибка при проверке таблицы assignees:', assigneesError);
     }
 
-    // Создаем таблицу response_templates
-    const { error: templatesError } = await supabase
-      .from('response_templates')
-      .select()
-      .limit(1);
-
-    if (templatesError && templatesError.code === '42P01') {
-      const { error } = await supabase.rpc('create_response_templates_table', {});
-      if (error) throw error;
-      console.log('Таблица response_templates создана успешно');
-    }
-
-    // Создаем таблицу change_history
     const { error: historyError } = await supabase
       .from('change_history')
-      .select()
+      .select('*')
       .limit(1);
 
-    if (historyError && historyError.code === '42P01') {
-      const { error } = await supabase.rpc('create_change_history_table', {});
-      if (error) throw error;
-      console.log('Таблица change_history создана успешно');
+    if (historyError) {
+      console.error('Ошибка при проверке таблицы change_history:', historyError);
     }
 
-    // Создаем таблицу content_management
     const { error: contentError } = await supabase
       .from('content_management')
-      .select()
+      .select('*')
       .limit(1);
 
-    if (contentError && contentError.code === '42P01') {
-      const { error } = await supabase.rpc('create_content_management_table', {});
-      if (error) throw error;
-      console.log('Таблица content_management создана успешно');
+    if (contentError) {
+      console.error('Ошибка при проверке таблицы content_management:', contentError);
     }
 
-    console.log('Все таблицы успешно созданы или уже существуют');
     return true;
   } catch (error) {
-    console.error('Ошибка при создании таблиц:', error);
+    console.error('Ошибка при проверке таблиц:', error);
     return false;
   }
 }; 

@@ -88,8 +88,8 @@ export function ComplaintsList({ complaints, onOpenResponseDialog, onDeleteCompl
               </div>
               <p className="text-sm text-gray-600 mb-2">{complaint.description}</p>
               <div className="text-sm text-gray-500 space-y-1">
-                <p>Категория: {getCategoryText(complaint.category)}</p>
-                <p>Локация: {complaint.location}</p>
+                <p>Категория: {getCategoryText(complaint.category || 'other')}</p>
+                <p>Локация: {complaint.location || ''}</p>
                 <p>Создано: {new Date(complaint.created_at).toLocaleString('ru-RU')}</p>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -129,13 +129,13 @@ export function ComplaintsList({ complaints, onOpenResponseDialog, onDeleteCompl
               {complaints.map((complaint) => (
                 <TableRow key={complaint.id}>
                   <TableCell>{complaint.title}</TableCell>
-                  <TableCell>{getCategoryText(complaint.category)}</TableCell>
+                  <TableCell>{getCategoryText(complaint.category || 'other')}</TableCell>
                   <TableCell>
                     <span className={getStatusColor(complaint.status)}>
                       {getStatusText(complaint.status)}
                     </span>
                   </TableCell>
-                  <TableCell>{complaint.location}</TableCell>
+                  <TableCell>{complaint.location || ''}</TableCell>
                   <TableCell>
                     {new Date(complaint.created_at).toLocaleString('ru-RU')}
                   </TableCell>

@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { X, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import InputMask from 'react-input-mask';
 
 const categories = [
   "facilities",
@@ -39,16 +40,19 @@ const categories = [
 ] as const;
 
 const complaintSchema = z.object({
+  title: z.string().min(3, { message: 'Укажите тему обращения (минимум 3 символа)' }),
   category: z.enum(categories),
   description: z.string().min(10, {
     message: "Описание должно содержать не менее 10 символов.",
   }),
-  contact_phone: z.string().regex(/^\d\(\d{3}\)\d{3} \d{2} \d{2}$/, {
-    message: "Формат телефона: X (XXX) XXX XX XX"
-  }).optional(),
+  contact_phone: z
+    .string()
+    .regex(/^(\+7\(\d{3}\)\d{3}-\d{2}-\d{2})?$/, { message: "Формат телефона: +7(XXX) XXX-XX-XX" })
+    .or(z.literal(''))
+    .optional(),
   contact_email: z.string().email({
     message: "Введите корректный email"
-  }).optional(),
+  }).optional().or(z.literal('')),
 });
 
 type FormData = z.infer<typeof complaintSchema>;
@@ -72,6 +76,7 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
   const form = useForm<FormData>({
     resolver: zodResolver(complaintSchema),
     defaultValues: {
+      title: '',
       category: "facilities",
       description: "",
       contact_phone: "",
@@ -137,14 +142,15 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
     
     try {
       await addComplaint({
+        title: data.title,
         location: locationName,
         locationId: locationId,
         locationName: propLocationName || locationName,
         category: data.category,
         description: data.description,
         attachments,
-        contact_email: data.contact_email || '',
-        contact_phone: data.contact_phone || ''
+        contact_email: data.contact_email || null,
+        contact_phone: data.contact_phone || null
       });
       
       toast.success("Обращение успешно отправлено");
@@ -164,6 +170,23 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Тема обращения</FormLabel>
+                <FormControl>
+                  <Input placeholder="Кратко опишите суть обращения" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Например: "Плохое освещение на корте"
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="category"
@@ -226,18 +249,18 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
                 <FormItem>
                   <FormLabel>Телефон (необязательно)</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="X (XXX) XXX XX XX"
-                      {...field}
-                      onChange={(e) => {
-                        let value = e.target.value.replace(/\D/g, '');
-                        if (value.length > 0) {
-                          value = value.match(new RegExp('.{1,1}|.{1,3}|.{1,3}|.{1,2}|.{1,2}', 'g'))?.join('') || '';
-                          value = value.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, '$1($2)$3 $4 $5');
-                        }
-                        field.onChange(value);
-                      }}
-                    />
+                    <InputMask
+                      mask="+7(999)999-99-99"
+                      value={field.value}
+                      onChange={field.onChange}
+                    >
+                      {(inputProps) => (
+                        <Input
+                          {...inputProps}
+                          placeholder="+7(XXX) XXX-XX-XX"
+                        />
+                      )}
+                    </InputMask>
                   </FormControl>
                   <FormDescription>
                     Контактный телефон для обратной связи
@@ -313,8 +336,10 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
                       type="button"
                       onClick={() => removeAttachment(attachment.id)}
                       className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-90 hover:opacity-100"
+                      title="Удалить вложение"
                     >
                       <X className="h-3 w-3" />
+                      <span className="sr-only">Удалить вложение</span>
                     </button>
                     <p className="text-xs text-gray-500 truncate mt-1">{attachment.name}</p>
                   </div>

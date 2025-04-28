@@ -14,43 +14,6 @@ const Navbar: React.FC = () => {
             <span className="text-red-500 font-semibold text-lg hidden sm:inline ml-4">Книга жалоб и предложений</span>
           </Link>
           
-          {/* Mobile menu */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-[#2a4a7f]">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[240px] sm:w-[300px]">
-              <nav className="flex flex-col gap-4 mt-8">
-                <Link 
-                  to="/" 
-                  className="px-4 py-2 hover:bg-gray-100 rounded-md transition-colors"
-                >
-                  Главная
-                </Link>
-                <Link 
-                  to="/locations" 
-                  className="px-4 py-2 hover:bg-gray-100 rounded-md transition-colors"
-                >
-                  Список объектов
-                </Link>
-                <Link 
-                  to="/complaints" 
-                  className="px-4 py-2 hover:bg-gray-100 rounded-md transition-colors"
-                >
-                  Обращения
-                </Link>
-                <Link 
-                  to="/admin/login" 
-                  className="px-4 py-2 hover:bg-gray-100 rounded-md transition-colors"
-                >
-                  Администратор
-                </Link>
-              </nav>
-            </SheetContent>
-          </Sheet>
-          
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link 
@@ -78,6 +41,45 @@ const Navbar: React.FC = () => {
               Администратор
             </Link>
           </nav>
+
+          {/* Mobile menu */}
+          <div className="block md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-white hover:bg-[#2a4a7f]">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[240px] sm:w-[300px]">
+                <nav className="flex flex-col gap-4 mt-8">
+                  <Link 
+                    to="/" 
+                    className="px-4 py-2 hover:bg-gray-100 rounded-md transition-colors"
+                  >
+                    Главная
+                  </Link>
+                  <Link 
+                    to="/locations" 
+                    className="px-4 py-2 hover:bg-gray-100 rounded-md transition-colors"
+                  >
+                    Список объектов
+                  </Link>
+                  <Link 
+                    to="/complaints" 
+                    className="px-4 py-2 hover:bg-gray-100 rounded-md transition-colors"
+                  >
+                    Обращения
+                  </Link>
+                  <Link 
+                    to="/admin/login" 
+                    className="px-4 py-2 hover:bg-gray-100 rounded-md transition-colors"
+                  >
+                    Администратор
+                  </Link>
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     </header>

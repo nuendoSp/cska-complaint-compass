@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ComplaintProvider } from "@/context/ComplaintContext";
 import { ContentProvider } from "@/context/ContentContext";
-import { createTables } from "@/lib/supabase";
+import { checkTables } from "@/lib/supabase";
 import { useEffect } from "react";
 import Index from "./pages/Index";
 import ComplaintPage from "./pages/ComplaintPage";
@@ -26,7 +26,7 @@ const AppRoutes: React.FC = () => {
   useEffect(() => {
     const initDb = async () => {
       try {
-        await createTables();
+        await checkTables();
       } catch (error) {
         console.error('Ошибка при инициализации базы данных:', error);
       }

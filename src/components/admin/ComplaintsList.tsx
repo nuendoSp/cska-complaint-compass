@@ -84,6 +84,23 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
     }
   };
 
+  // Перевод категорий и статусов на русский
+  const categoryRu: Record<string, string> = {
+    facilities: 'Объекты и инфраструктура',
+    staff: 'Персонал',
+    equipment: 'Оборудование',
+    cleanliness: 'Чистота',
+    services: 'Услуги',
+    safety: 'Безопасность',
+    other: 'Другое',
+  };
+  const statusRu: Record<string, string> = {
+    new: 'Новая',
+    processing: 'В обработке',
+    resolved: 'Решено',
+    rejected: 'Отклонено',
+  };
+
   return (
     <div>
       <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -167,10 +184,10 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
                     />
                     <div>
                       <CardTitle className="text-lg">
-                        Обращение #{complaint.id}
+                        Обращение от {format(new Date(complaint.created_at || Date.now()), 'dd.MM.yyyy HH:mm')} — {complaint.title || 'Без темы'}
                       </CardTitle>
                       <CardDescription>
-                        {format(new Date(complaint.created_at), 'dd.MM.yyyy HH:mm')}
+                        Категория: {categoryRu[complaint.category] || 'Другое'} | Локация: {'ТЦ "ЦСКА"'}
                       </CardDescription>
                     </div>
                   </div>
@@ -249,7 +266,7 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
 
               <CardFooter className="flex justify-between">
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="gap-1">
+                  <Button variant="outline" size="sm" className="gap-1" onClick={() => onOpenResponseDialog(complaint)}>
                     <FileText className="h-3.5 w-3.5" />
                     Подробнее
                   </Button>

@@ -19,6 +19,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
+const statusRu: Record<string, string> = {
+  new: 'Новая',
+  processing: 'В обработке',
+  resolved: 'Решено',
+  rejected: 'Отклонено',
+  in_progress: 'В процессе',
+  closed: 'Закрыта',
+};
+const categoryRu: Record<string, string> = {
+  facilities: 'Объекты и инфраструктура',
+  staff: 'Персонал',
+  equipment: 'Оборудование',
+  cleanliness: 'Чистота',
+  services: 'Услуги',
+  safety: 'Безопасность',
+  other: 'Другое',
+};
+
 export const Dashboard = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +165,7 @@ export const Dashboard = () => {
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${statusRu[name] || name} ${(percent * 100).toFixed(0)}%`}
                 >
                   {getStatusData().map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -174,7 +192,7 @@ export const Dashboard = () => {
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${categoryRu[name] || name} ${(percent * 100).toFixed(0)}%`}
                 >
                   {getCategoryData().map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

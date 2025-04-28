@@ -29,7 +29,7 @@ const ComplaintsListPage = () => {
   const [filter, setFilter] = useState<string>('all');
 
   // Get unique locations for filter
-  const uniqueLocations = Array.from(new Set(complaints.map(complaint => complaint.locationId)));
+  const uniqueLocations = ['cska_default'];
 
   // Filter complaints based on search term and filters
   const filteredComplaints = complaints.filter(complaint => 
@@ -42,6 +42,17 @@ const ComplaintsListPage = () => {
     const dateB = b.submittedAt ? new Date(b.submittedAt).getTime() : 0;
     return dateB - dateA;
   });
+
+  // Перевод категорий на русский
+  const categoryRu: Record<string, string> = {
+    facilities: 'Объекты и инфраструктура',
+    staff: 'Персонал',
+    equipment: 'Оборудование',
+    cleanliness: 'Чистота',
+    services: 'Услуги',
+    safety: 'Безопасность',
+    other: 'Другое',
+  };
 
   const getStatusBadge = (status: Complaint['status']) => {
     switch (status) {
@@ -118,13 +129,13 @@ const ComplaintsListPage = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Все категории</SelectItem>
-                <SelectItem value="Facilities">Помещения</SelectItem>
-                <SelectItem value="Staff">Персонал</SelectItem>
-                <SelectItem value="Equipment">Оборудование</SelectItem>
-                <SelectItem value="Cleanliness">Чистота</SelectItem>
-                <SelectItem value="Services">Услуги</SelectItem>
-                <SelectItem value="Safety">Безопасность</SelectItem>
-                <SelectItem value="Other">Другое</SelectItem>
+                <SelectItem value="facilities">Объекты и инфраструктура</SelectItem>
+                <SelectItem value="staff">Персонал</SelectItem>
+                <SelectItem value="equipment">Оборудование</SelectItem>
+                <SelectItem value="cleanliness">Чистота</SelectItem>
+                <SelectItem value="services">Услуги</SelectItem>
+                <SelectItem value="safety">Безопасность</SelectItem>
+                <SelectItem value="other">Другое</SelectItem>
               </SelectContent>
             </Select>
             
@@ -140,8 +151,8 @@ const ComplaintsListPage = () => {
                 {uniqueLocations.map((locationId) => {
                   const complaint = complaints.find(c => c.locationId === locationId);
                   return (
-                    <SelectItem key={locationId} value={locationId}>
-                      {complaint?.locationName || locationId}
+                    <SelectItem key={locationId || 'unknown'} value={locationId || 'unknown'}>
+                      {'ТЦ "ЦСКА"'}
                     </SelectItem>
                   );
                 })}
@@ -177,11 +188,11 @@ const ComplaintsListPage = () => {
                       <TableCell className="whitespace-nowrap">
                         {complaint.submittedAt ? formatDate(new Date(complaint.submittedAt)) : 'Не указано'}
                       </TableCell>
-                      <TableCell>{complaint.locationName || 'Без названия'}</TableCell>
-                      <TableCell>{complaint.category}</TableCell>
+                      <TableCell>{'ТЦ "ЦСКА"'}</TableCell>
+                      <TableCell>{categoryRu[complaint.category] || 'Другое'}</TableCell>
                       <TableCell>{getStatusBadge(complaint.status)}</TableCell>
                       <TableCell className="max-w-xs truncate">
-                        {complaint.description.length > 50
+                        <b>{complaint.title || 'Без темы'}</b>: {complaint.description.length > 50
                           ? `${complaint.description.substring(0, 50)}...`
                           : complaint.description}
                       </TableCell>
