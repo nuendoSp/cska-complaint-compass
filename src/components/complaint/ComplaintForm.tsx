@@ -28,6 +28,8 @@ import {
 import { X, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import InputMask from 'react-input-mask';
+import { Rating } from '@/components/ui/rating';
+import { supabase } from '@/lib/supabase';
 
 const categories = [
   "facilities",
@@ -53,6 +55,7 @@ const complaintSchema = z.object({
   contact_email: z.string().email({
     message: "Введите корректный email"
   }).optional().or(z.literal('')),
+  rating: z.number().min(1).max(5).optional(),
 });
 
 type FormData = z.infer<typeof complaintSchema>;
@@ -61,6 +64,8 @@ interface ComplaintFormProps {
   locationId?: string;
   locationName?: string;
 }
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationId, locationName: propLocationName }) => {
   const [searchParams] = useSearchParams();
@@ -85,52 +90,41 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
   });
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
+    if (!e.target.files?.length) return;
 
     const newAttachments: FileAttachment[] = [];
-    const files = Array.from(e.target.files);
 
-    for (const file of files) {
-      const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
-
-      if (!isImage && !isVideo) {
-        toast.error(`Файл ${file.name} не является изображением или видео`);
+    for (const file of Array.from(e.target.files)) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`Файл ${file.name} слишком большой. Максимальный размер: ${MAX_FILE_SIZE / 1024 / 1024}MB`);
         continue;
       }
 
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error(`Файл ${file.name} превышает 10MB`);
+      // Проверяем MIME-тип файла
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        toast.error(`Файл ${file.name} имеет неподдерживаемый формат. Разрешены только изображения и видео.`);
         continue;
       }
 
-      if (attachments.length + newAttachments.length >= 5) {
-        toast.error('Максимальное количество файлов - 5');
-        break;
-      }
-
-      const fileType = isImage ? 'image' : 'video';
-      const fileUrl = URL.createObjectURL(file);
-      
+      const url = URL.createObjectURL(file);
       newAttachments.push({
         id: Math.random().toString(36).substring(2, 9),
-        type: fileType,
-        url: fileUrl,
+        url,
         name: file.name,
-        size: file.size
+        type: file.type,
+        size: file.size,
+        file: file
       });
     }
 
     setAttachments(prev => [...prev, ...newAttachments]);
-    
-    // Reset input value so the same file can be selected again if removed
-    e.target.value = '';
+    e.target.value = ''; // Сбрасываем input для возможности повторной загрузки того же файла
   };
 
   const removeAttachment = (id: string) => {
     setAttachments(prev => {
       const attachment = prev.find(a => a.id === id);
-      if (attachment) {
+      if (attachment?.url) {
         URL.revokeObjectURL(attachment.url);
       }
       return prev.filter(a => a.id !== id);
@@ -141,23 +135,94 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
     setIsSubmitting(true);
     
     try {
-      await addComplaint({
+      // Загружаем файлы в Supabase Storage
+      const uploadedAttachments = await Promise.all(
+        attachments.map(async (attachment) => {
+          try {
+            console.log('Starting file upload for:', attachment.name);
+            
+            const file = attachment.file;
+            if (!file) {
+              console.error('No file available for attachment:', attachment);
+              return null;
+            }
+
+            // Создаем безопасное имя файла
+            const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}-${safeFileName}`;
+            console.log('Generated filename:', fileName);
+
+            // Загружаем файл в Supabase Storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('complaint_files')
+              .upload(fileName, file, {
+                cacheControl: '3600',
+                contentType: file.type,
+                upsert: false
+              });
+
+            if (uploadError) {
+              console.error('Error uploading file:', uploadError);
+              toast.error(`Ошибка при загрузке файла ${attachment.name}`);
+              return null;
+            }
+
+            // Получаем публичный URL для загруженного файла
+            const { data: { publicUrl } } = supabase.storage
+              .from('complaint_files')
+              .getPublicUrl(fileName);
+
+            console.log('File uploaded successfully:', uploadData);
+            console.log('Public URL:', publicUrl);
+
+            return {
+              id: Math.random().toString(36).substring(2, 9),
+              name: file.name,
+              url: publicUrl,
+              type: file.type,
+              size: file.size
+            };
+          } catch (error) {
+            console.error('Error processing attachment:', error);
+            toast.error(`Ошибка при загрузке файла ${attachment.name}`);
+            return null;
+          }
+        })
+      );
+
+      // Фильтруем неудачные загрузки
+      const validAttachments = uploadedAttachments.filter((attachment): attachment is FileAttachment => attachment !== null);
+      console.log('Valid attachments:', validAttachments);
+
+      const complaintData = {
         title: data.title,
-        location: locationName,
-        locationId: locationId,
-        locationName: propLocationName || locationName,
-        category: data.category,
         description: data.description,
-        attachments,
-        contact_email: data.contact_email || null,
-        contact_phone: data.contact_phone || null
-      });
+        category: data.category as ComplaintCategory,
+        location: 'ТЦ "ЦСКА"',
+        location_id: 'cska_default',
+        locationname: 'ТЦ "ЦСКА"',
+        user_id: 'anonymous',
+        contact_phone: data.contact_phone || undefined,
+        contact_email: data.contact_email || undefined,
+        rating: data.rating,
+        attachments: validAttachments.map(a => ({
+          id: a.id,
+          name: a.name,
+          url: a.url,
+          type: a.type,
+          size: a.size
+        }))
+      };
+
+      console.log('Sending complaint data:', complaintData);
+
+      await addComplaint(complaintData);
       
       toast.success("Обращение успешно отправлено");
       navigate('/success');
     } catch (error) {
       console.error('Error submitting complaint:', error);
-      toast.error("Произошла ошибка при отправке обращения");
+      toast.error('Произошла ошибка при отправке обращения');
     } finally {
       setIsSubmitting(false);
     }
@@ -292,6 +357,34 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
             />
           </div>
 
+          <FormField
+            control={form.control}
+            name="rating"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Оценка</FormLabel>
+                <FormControl>
+                  <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg">
+                    <Rating
+                      value={field.value || 0}
+                      onChange={field.onChange}
+                      size="lg"
+                    />
+                    <p className="text-sm text-gray-500">
+                      {field.value === 0 && "Поставьте оценку от 1 до 5 звезд"}
+                      {field.value === 1 && "Очень плохо"}
+                      {field.value === 2 && "Плохо"}
+                      {field.value === 3 && "Нормально"}
+                      {field.value === 4 && "Хорошо"}
+                      {field.value === 5 && "Отлично"}
+                    </p>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <div className="space-y-2">
             <FormLabel htmlFor="attachments">Прикрепить фото/видео</FormLabel>
             <div className="flex items-center gap-2">
@@ -311,7 +404,7 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
                 onChange={handleFileChange}
               />
               <p className="text-xs text-gray-500">
-                До 5 файлов, максимум 10MB каждый
+                До 5 файлов, максимум 5MB каждый
               </p>
             </div>
 
@@ -319,7 +412,7 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {attachments.map(attachment => (
                   <div key={attachment.id} className="relative group">
-                    {attachment.type === 'image' ? (
+                    {attachment.type.startsWith('image/') ? (
                       <img
                         src={attachment.url}
                         alt={attachment.name}
@@ -371,3 +464,4 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
 };
 
 export default ComplaintForm;
+

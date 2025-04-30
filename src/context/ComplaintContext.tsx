@@ -43,7 +43,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .select('*')
         .order('created_at', { ascending: false });
 
-      console.log('Supabase response:', { data, error });
+      console.log('Raw Supabase response:', data);
 
       if (error) {
         console.error('Supabase error:', error);
@@ -57,25 +57,72 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
 
       // Преобразуем данные
-      const formattedData = data.map(complaint => ({
-        id: complaint.id,
-        title: complaint.title,
-        description: complaint.description,
-        status: (complaint.status as ComplaintStatus) || 'new',
-        location: complaint.location || 'ТЦ "ЦСКА"',
-        locationId: complaint.location_id || 'cska_default',
-        locationName: complaint.locationname || complaint.location || 'ТЦ "ЦСКА"',
-        created_at: complaint.created_at,
-        updated_at: complaint.updated_at,
-        submittedAt: complaint.submittedat || complaint.created_at,
-        user_id: complaint.user_id || '',
-        category: (complaint.category as ComplaintCategory) || 'other',
-        response: complaint.response,
-        priority_id: complaint.priority_id || null,
-        assignee_id: complaint.assignee_id || null,
-        attachments: Array.isArray(complaint.attachments) ? complaint.attachments : [],
-        contact_email: complaint.contact_email || '',
-        contact_phone: complaint.contact_phone || ''
+      const formattedData = await Promise.all(data.map(async (complaint) => {
+        console.log('Processing complaint attachments:', complaint.attachments);
+        
+        const processedAttachments = Array.isArray(complaint.attachments) 
+          ? await Promise.all(complaint.attachments.map(async (attachment) => {
+              console.log('Processing attachment:', attachment);
+              
+              // Если attachment уже является объектом с url, возвращаем его
+              if (typeof attachment === 'object' && attachment.url) {
+                return attachment;
+              }
+              
+              // Иначе получаем публичный URL для файла из хранилища Supabase
+              const fileName = typeof attachment === 'string' ? attachment : attachment.name;
+              const { data } = supabase.storage
+                .from('complaint_files')
+                .getPublicUrl(fileName);
+              
+              const url = data?.publicUrl;
+              console.log('Generated public URL:', url);
+              
+              if (!url) {
+                console.error('Failed to generate public URL for attachment:', fileName);
+                return null;
+              }
+              
+              return {
+                id: Math.random().toString(36).substring(2, 9),
+                url: url,
+                name: fileName,
+                type: fileName.match(/\.(jpg|jpeg|png|gif)$/i) ? 'image' : 'file',
+                size: 0
+              };
+            }))
+          : [];
+
+        // Фильтруем неудачные загрузки
+        const validAttachments = processedAttachments.filter((attachment): attachment is FileAttachment => attachment !== null);
+        console.log('Processed attachments:', validAttachments);
+
+        return {
+          id: complaint.id,
+          title: complaint.title || '',
+          description: complaint.description,
+          category: (complaint.category as ComplaintCategory) || 'other',
+          location: complaint.location || 'ТЦ "ЦСКА"',
+          location_id: complaint.location_id || 'cska_default',
+          locationname: complaint.locationname || complaint.location || 'ТЦ "ЦСКА"',
+          user_id: complaint.user_id || '',
+          status: (complaint.status as ComplaintStatus) || 'new',
+          created_at: complaint.created_at,
+          updated_at: complaint.updated_at,
+          submittedat: complaint.submittedat || complaint.created_at,
+          contact_email: complaint.contact_email || '',
+          contact_phone: complaint.contact_phone || '',
+          response: complaint.response ? {
+            id: complaint.response.id,
+            text: complaint.response.text,
+            message: complaint.response.text,
+            adminName: complaint.response.adminName,
+            respondedAt: complaint.response.respondedAt || complaint.response.created_at,
+            created_at: complaint.response.created_at,
+            updated_at: complaint.response.updated_at
+          } : undefined,
+          attachments: validAttachments
+        };
       }));
 
       console.log('Formatted complaints data:', formattedData);
@@ -89,29 +136,33 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const addComplaint = async (complaint: Omit<Complaint, 'id' | 'created_at' | 'updated_at' | 'status'>) => {
     try {
-      console.log('addComplaint вызван', complaint);
+      console.log('addComplaint вызван с данными:', complaint);
+      
       // Строгая валидация обязательных полей
       if (!complaint.title?.trim() || !complaint.description?.trim()) {
         toast.error('Заполните все обязательные поля!');
         return;
       }
+
       // Подготавливаем данные для вставки
       const complaintData = {
         title: complaint.title.trim(),
         description: complaint.description.trim(),
         category: complaint.category || 'other',
-        location: 'ТЦ "ЦСКА"',
-        location_id: 'cska_default',
-        locationname: 'ТЦ "ЦСКА"',
-        user_id: 'test_user',
-        status: 'new',
+        location: complaint.location || 'ТЦ "ЦСКА"',
+        location_id: complaint.location_id || 'cska_default',
+        locationname: complaint.locationname || 'ТЦ "ЦСКА"',
+        user_id: complaint.user_id || 'anonymous',
+        status: 'new' as const,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         submittedat: new Date().toISOString(),
-        attachments: [],
-        contact_email: complaint.contact_email || null,
-        contact_phone: complaint.contact_phone || null
+        contact_email: complaint.contact_email || undefined,
+        contact_phone: complaint.contact_phone || undefined,
+        rating: complaint.rating,
+        attachments: complaint.attachments || []
       };
+
       console.log('Отправляем в Supabase:', complaintData);
 
       // Вставляем данные в Supabase
@@ -120,6 +171,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .insert([complaintData])
         .select()
         .single();
+
       console.log('Результат insert в Supabase:', { data, error });
 
       if (error) {
@@ -127,6 +179,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         toast.error(error.message || 'Ошибка при отправке жалобы');
         throw error;
       }
+
       if (!data) {
         throw new Error('No data returned after insert');
       }
@@ -139,25 +192,27 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         category: data.category as ComplaintCategory,
         created_at: data.created_at,
         updated_at: data.updated_at,
-        submittedAt: data.submittedAt,
-        response: data.response,
-        priority_id: data.priority_id,
-        assignee_id: data.assignee_id,
+        submittedat: data.submittedat,
         attachments: Array.isArray(data.attachments) ? data.attachments : [],
-        contact_email: data.contact_email || null,
-        contact_phone: data.contact_phone || null,
-        user_id: data.user_id
+        contact_email: data.contact_email || undefined,
+        contact_phone: data.contact_phone || undefined,
+        rating: data.rating
       };
+
+      console.log('Форматированные данные:', formattedData);
 
       // Обновляем состояние
       setComplaints(prev => [formattedData, ...prev]);
+
       // Подробный лог перед отправкой в Telegram
       console.log('Отправляем в Telegram:', formattedData);
       const telegramResult = await sendTelegramNotification(formattedData, 'created');
       console.log('Результат отправки в Telegram:', telegramResult);
+
       if (!telegramResult) {
         console.warn('Failed to send Telegram notification');
       }
+
       toast.success('Ваше сообщение успешно отправлено! Мы рассмотрим его в ближайшее время.');
     } catch (error) {
       console.error('Error adding complaint:', error);
@@ -186,9 +241,13 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       const formattedData = {
         id: data.id,
-        category: data.category as ComplaintCategory,
+        title: data.title || '',
         description: data.description,
+        category: data.category as ComplaintCategory,
         location: data.location,
+        location_id: data.location_id || '',
+        locationname: data.locationname || data.location || '',
+        user_id: data.user_id || '',
         status: data.status as ComplaintStatus,
         created_at: data.created_at,
         updated_at: data.updated_at,
@@ -249,6 +308,23 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updated_at: now
       } satisfies ComplaintResponse;
 
+      // Сохраняем ответ в отдельной таблице responses
+      const { error: respError } = await supabase
+        .from('responses')
+        .insert({
+          complaint_id: complaintId,
+          user_id: 'admin', // или получить реального админа
+          message: response.text,
+          respondedat: now,
+          created_at: now,
+          updated_at: now
+        });
+      if (respError) {
+        console.error('Ошибка при сохранении ответа в responses:', respError);
+        toast.error('Ошибка при сохранении ответа в истории');
+      }
+
+      // Сохраняем ответ в complaints (старое поведение)
       const { data, error } = await supabase
         .from('complaints')
         .update({
@@ -275,11 +351,13 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       const formattedData: Complaint = {
         id: data.id,
-        category: data.category as ComplaintCategory,
+        title: data.title || '',
         description: data.description,
+        category: data.category as ComplaintCategory,
         location: data.location,
-        locationId: data.location_id,
-        locationName: data.locationname || data.location,
+        location_id: data.location_id || '',
+        locationname: data.locationname || data.location || '',
+        user_id: data.user_id || '',
         status: data.status as ComplaintStatus,
         created_at: data.created_at,
         updated_at: data.updated_at,
@@ -289,7 +367,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         attachments: Array.isArray(data.attachments) ? data.attachments : [],
         contact_email: data.contact_email || '',
         contact_phone: data.contact_phone || '',
-        user_id: data.user_id || ''
+        submittedat: data.submittedat || data.created_at
       };
 
       setComplaints(prev => prev.map(c => c.id === complaintId ? formattedData : c));
@@ -319,17 +397,20 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return null;
       }
 
+      console.log('Raw complaint data:', data);
+      console.log('Attachments data:', data.attachments);
+
       return {
         id: data.id,
-        title: data.title,
+        title: data.title || '',
         description: data.description,
         status: (data.status as ComplaintStatus) || 'new',
         location: data.location || 'ТЦ "ЦСКА"',
-        locationId: data.location_id || 'cska_default',
-        locationName: data.locationname || data.location || 'ТЦ "ЦСКА"',
+        location_id: data.location_id || 'cska_default',
+        locationname: data.locationname || data.location || 'ТЦ "ЦСКА"',
         created_at: data.created_at,
         updated_at: data.updated_at,
-        submittedAt: data.submittedat || data.created_at,
+        submittedat: data.submittedat || data.created_at,
         user_id: data.user_id || '',
         category: (data.category as ComplaintCategory) || 'other',
         response: data.response ? {
@@ -343,7 +424,17 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         } : undefined,
         priority_id: data.priority_id || null,
         assignee_id: data.assignee_id || null,
-        attachments: Array.isArray(data.attachments) ? data.attachments : [],
+        attachments: Array.isArray(data.attachments) ? data.attachments.map(attachment => {
+          if (typeof attachment === 'string') {
+            return {
+              id: Math.random().toString(36).substring(2, 9),
+              type: 'image',
+              url: attachment,
+              name: `Вложение ${Math.random().toString(36).substring(2, 9)}`
+            };
+          }
+          return attachment;
+        }) : [],
         contact_email: data.contact_email || '',
         contact_phone: data.contact_phone || ''
       };
@@ -370,12 +461,17 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       return data.map(complaint => ({
         id: complaint.id,
+        title: complaint.title || '',
         category: complaint.category as ComplaintCategory,
         description: complaint.description,
         location: complaint.location,
+        location_id: complaint.location_id || '',
+        locationname: complaint.locationname || complaint.location || '',
+        user_id: complaint.user_id || '',
         status: complaint.status as ComplaintStatus,
         created_at: complaint.created_at,
         updated_at: complaint.updated_at,
+        submittedat: complaint.submittedat || complaint.created_at,
         response: complaint.response ? {
           id: complaint.response.id,
           text: complaint.response.text,
@@ -421,9 +517,13 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       const formattedData = {
         id: data.id,
-        category: data.category as ComplaintCategory,
+        title: data.title || '',
         description: data.description,
+        category: data.category as ComplaintCategory,
         location: data.location,
+        location_id: data.location_id || '',
+        locationname: data.locationname || data.location || '',
+        user_id: data.user_id || '',
         status: data.status as ComplaintStatus,
         created_at: data.created_at,
         updated_at: data.updated_at,
@@ -457,6 +557,74 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const deleteComplaint = async (complaintId: string) => {
     try {
+      // Получаем данные обращения перед удалением
+      const { data: complaint, error: fetchError } = await supabase
+        .from('complaints')
+        .select('*')
+        .eq('id', complaintId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      console.log('Полученные данные обращения:', complaint);
+
+      // Удаляем файлы из storage
+      if (complaint?.attachments && Array.isArray(complaint.attachments)) {
+        console.log('Найдены вложения для удаления:', complaint.attachments);
+        
+        for (const attachment of complaint.attachments) {
+          console.log('Обработка вложения:', attachment);
+          
+          let fileName;
+          
+          if (typeof attachment === 'string') {
+            // Если attachment - строка URL, извлекаем имя файла из URL
+            const urlParts = attachment.split('/');
+            fileName = decodeURIComponent(urlParts[urlParts.length - 1]);
+            console.log('Извлечено имя файла из URL:', fileName);
+          } else if (typeof attachment === 'object' && attachment.url) {
+            // Если attachment - объект с URL, извлекаем имя файла из URL
+            const urlParts = attachment.url.split('/');
+            fileName = decodeURIComponent(urlParts[urlParts.length - 1]);
+            console.log('Извлечено имя файла из объекта URL:', fileName);
+          } else if (typeof attachment === 'object' && attachment.name) {
+            // Если есть прямое имя файла
+            fileName = attachment.name;
+            console.log('Использовано прямое имя файла:', fileName);
+          }
+
+          if (fileName) {
+            console.log('Попытка удаления файла из storage:', fileName);
+            
+            try {
+              const { data: listData } = await supabase.storage
+                .from('complaint_files')
+                .list();
+              console.log('Текущие файлы в storage:', listData);
+              
+              const { error: deleteError } = await supabase.storage
+                .from('complaint_files')
+                .remove([fileName]);
+
+              if (deleteError) {
+                console.error('Ошибка при удалении файла:', fileName, deleteError);
+              } else {
+                console.log('Файл успешно удален:', fileName);
+                
+                // Проверяем, действительно ли файл удален
+                const { data: listAfterDelete } = await supabase.storage
+                  .from('complaint_files')
+                  .list();
+                console.log('Файлы в storage после удаления:', listAfterDelete);
+              }
+            } catch (storageError) {
+              console.error('Ошибка при работе с storage:', storageError);
+            }
+          }
+        }
+      }
+
+      // Удаляем само обращение
       const { error } = await supabase
         .from('complaints')
         .delete()
@@ -470,17 +638,23 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (localStorage.getItem('isAdmin') === 'true') {
         await sendTelegramNotification({
           id: complaintId,
+          title: 'Удаленная жалоба',
           description: 'Жалоба была удалена администратором',
           location: '',
+          location_id: '',
+          locationname: '',
+          user_id: '',
           category: 'other',
           status: 'rejected',
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          attachments: []
         }, 'updated');
       }
       
       toast.success('Жалоба успешно удалена');
     } catch (error) {
+      console.error('Error deleting complaint:', error);
       toast.error('Ошибка при удалении жалобы');
     }
   };

@@ -62,36 +62,39 @@ const isAdmin = () => {
 };
 
 const formatComplaintMessage = (complaint: Complaint) => {
-  const statusEmoji = statusEmojis[complaint.status];
-  const categoryEmoji = categoryEmojis[complaint.category];
-
+  const date = complaint.submittedat || complaint.created_at;
   return `
-🔔 <b>Новое обращение #${complaint.id}</b>
+🔔 <b>Новое обращение</b>
 
-${categoryEmoji} <b>Категория:</b> ${getCategoryText(complaint.category)}
-📝 <b>Описание:</b> ${complaint.description}
-📍 <b>Локация:</b> ${complaint.location}
-${statusEmoji} <b>Статус:</b> ${getStatusText(complaint.status)}
-⏰ <b>Дата создания:</b> ${new Date(complaint.created_at).toLocaleString('ru-RU')}
-${complaint.contact_email ? `\n📧 <b>Email:</b> ${complaint.contact_email}` : ''}
+📅 <b>Дата:</b> ${new Date(date).toLocaleString('ru-RU')}
+📝 <b>Тема:</b> ${complaint.title || 'Без темы'}
+${categoryEmojis[complaint.category]} <b>Категория:</b> ${getCategoryText(complaint.category)}
+ℹ️ <b>Описание:</b> ${complaint.description}
 ${complaint.contact_phone ? `\n📱 <b>Телефон:</b> ${complaint.contact_phone}` : ''}
-${complaint.attachments?.length ? `\n📎 <b>Вложения:</b> ${complaint.attachments.length} файл(ов)` : ''}
+${complaint.contact_email ? `\n📧 <b>Email:</b> ${complaint.contact_email}` : ''}
   `.trim();
 };
 
 const formatStatusUpdateMessage = (complaint: Complaint) => {
-  const statusEmoji = statusEmojis[complaint.status];
-  const categoryEmoji = categoryEmojis[complaint.category];
-
+  const date = complaint.submittedat || complaint.created_at;
   return `
-🔄 <b>Обновление статуса обращения #${complaint.id}</b>
+${complaint.response ? `
+💬 <b>Ответ на обращение</b>
 
-${categoryEmoji} <b>Категория:</b> ${getCategoryText(complaint.category)}
-📝 <b>Описание:</b> ${complaint.description}
-📍 <b>Локация:</b> ${complaint.location}
-${statusEmoji} <b>Новый статус:</b> ${getStatusText(complaint.status)}
-⏰ <b>Дата обновления:</b> ${new Date(complaint.updated_at).toLocaleString('ru-RU')}
-${complaint.response ? `\n💬 <b>Ответ администратора:</b>\n${complaint.response.text}\n\n👨‍💼 <b>Администратор:</b> ${complaint.response.adminName}` : ''}
+📅 <b>Дата обращения:</b> ${new Date(date).toLocaleString('ru-RU')}
+📝 <b>Тема:</b> ${complaint.title || 'Без темы'}
+ℹ️ <b>Описание:</b> ${complaint.description}
+
+✍️ <b>Ответ администратора:</b>
+${complaint.response.text}
+
+👨‍💼 ${complaint.response.adminName}
+⏰ ${new Date(complaint.response.respondedAt).toLocaleString('ru-RU')}` : 
+`🔄 <b>Статус обновлен</b>
+
+📅 <b>Дата:</b> ${new Date(complaint.updated_at).toLocaleString('ru-RU')}
+📝 <b>Тема:</b> ${complaint.title || 'Без темы'}
+${statusEmojis[complaint.status]} <b>Новый статус:</b> ${getStatusText(complaint.status)}`}
   `.trim();
 };
 
@@ -127,7 +130,8 @@ export const sendTelegramNotification = async (complaint: Complaint, action: 'cr
       ? formatComplaintMessage(complaint)
       : formatStatusUpdateMessage(complaint);
 
-    const response = await fetch(`${TELEGRAM_API_URL}/sendMessage`, {
+    // Сначала отправляем текстовое сообщение
+    const messageResponse = await fetch(`${TELEGRAM_API_URL}/sendMessage`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -139,10 +143,19 @@ export const sendTelegramNotification = async (complaint: Complaint, action: 'cr
       })
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
+    if (!messageResponse.ok) {
+      const errorData = await messageResponse.json();
       console.error('Telegram API error:', errorData);
       return false;
+    }
+
+    // Если есть вложения, отправляем их
+    if (complaint.attachments && complaint.attachments.length > 0) {
+      for (const attachment of complaint.attachments) {
+        if (attachment.startsWith('data:image')) {
+          await sendPhotoToTelegram(attachment, 'Вложение к обращению');
+        }
+      }
     }
 
     return true;

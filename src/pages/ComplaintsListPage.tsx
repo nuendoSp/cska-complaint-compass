@@ -10,36 +10,37 @@ import {
   TableBody,
   TableCell
 } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Search, Clock, CheckCircle2, AlertCircle, XCircle, FileText } from 'lucide-react';
 import { Complaint, ComplaintCategory } from '@/types';
-import { format } from 'date-fns';
 import { formatDate } from '@/lib/utils';
+import { ComplaintDetailsDialog } from '@/components/ComplaintDetailsDialog';
 
-const ComplaintsListPage = () => {
+export default function ComplaintsListPage() {
   const navigate = useNavigate();
-  const { complaints, deleteComplaint } = useComplaintContext();
+  const { complaints } = useComplaintContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<ComplaintCategory | 'all'>('all');
   const [filterLocation, setFilterLocation] = useState<string>('all');
-  const [filter, setFilter] = useState<string>('all');
+  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
 
   // Get unique locations for filter
   const uniqueLocations = ['cska_default'];
 
   // Filter complaints based on search term and filters
   const filteredComplaints = complaints.filter(complaint => 
-    (complaint.locationName || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (complaint.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (complaint.title || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Sort by date, newest first
   const sortedComplaints = [...filteredComplaints].sort((a: Complaint, b: Complaint) => {
-    const dateA = a.submittedAt ? new Date(a.submittedAt).getTime() : 0;
-    const dateB = b.submittedAt ? new Date(b.submittedAt).getTime() : 0;
+    const dateA = a.submittedat ? new Date(a.submittedat).getTime() : new Date(a.created_at || Date.now()).getTime();
+    const dateB = b.submittedat ? new Date(b.submittedat).getTime() : new Date(b.created_at || Date.now()).getTime();
     return dateB - dateA;
   });
 
@@ -85,12 +86,6 @@ const ComplaintsListPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Вы уверены, что хотите удалить эту жалобу?')) {
-      await deleteComplaint(id);
-    }
-  };
-
   return (
     <Layout>
       <div className="max-w-6xl mx-auto px-4 mt-8">
@@ -112,7 +107,7 @@ const ComplaintsListPage = () => {
           <div className="relative flex-grow">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input 
-              placeholder="Поиск по описанию или локации" 
+              placeholder="Поиск по описанию или теме" 
               className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -148,14 +143,11 @@ const ComplaintsListPage = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Все локации</SelectItem>
-                {uniqueLocations.map((locationId) => {
-                  const complaint = complaints.find(c => c.locationId === locationId);
-                  return (
-                    <SelectItem key={locationId || 'unknown'} value={locationId || 'unknown'}>
-                      {'ТЦ "ЦСКА"'}
-                    </SelectItem>
-                  );
-                })}
+                {uniqueLocations.map((locationId) => (
+                  <SelectItem key={locationId || 'unknown'} value={locationId || 'unknown'}>
+                    {'ТЦ "ЦСКА"'}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -163,7 +155,7 @@ const ComplaintsListPage = () => {
 
         {sortedComplaints.length === 0 ? (
           <Card className="text-center p-10">
-            <p className="text-gray-500">обращения не найдены</p>
+            <p className="text-gray-500">Обращения не найдены</p>
           </Card>
         ) : (
           <Card>
@@ -186,24 +178,23 @@ const ComplaintsListPage = () => {
                   {sortedComplaints.map((complaint: Complaint) => (
                     <TableRow key={complaint.id}>
                       <TableCell className="whitespace-nowrap">
-                        {complaint.submittedAt ? formatDate(new Date(complaint.submittedAt)) : 'Не указано'}
+                        {complaint.submittedat ? formatDate(new Date(complaint.submittedat)) : formatDate(new Date(complaint.created_at || Date.now()))}
                       </TableCell>
                       <TableCell>{'ТЦ "ЦСКА"'}</TableCell>
-                      <TableCell>{categoryRu[complaint.category] || 'Другое'}</TableCell>
-                      <TableCell>{getStatusBadge(complaint.status)}</TableCell>
+                      <TableCell>{categoryRu[complaint.category || 'other'] || 'Другое'}</TableCell>
+                      <TableCell>{getStatusBadge(complaint.status || 'new')}</TableCell>
                       <TableCell className="max-w-xs truncate">
-                        <b>{complaint.title || 'Без темы'}</b>: {complaint.description.length > 50
+                        <b>{complaint.title || 'Без темы'}</b>: {complaint.description && complaint.description.length > 50
                           ? `${complaint.description.substring(0, 50)}...`
-                          : complaint.description}
+                          : complaint.description || ''}
                       </TableCell>
                       <TableCell>
                         <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="flex items-center gap-1"
-                          onClick={() => navigate(`/complaints/${complaint.id}`)}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedComplaint(complaint)}
                         >
-                          <FileText className="h-4 w-4" />
+                          <FileText className="h-4 w-4 mr-1" />
                           Подробнее
                         </Button>
                       </TableCell>
@@ -214,9 +205,17 @@ const ComplaintsListPage = () => {
             </CardContent>
           </Card>
         )}
+
+        {selectedComplaint && (
+          <ComplaintDetailsDialog
+            complaint={selectedComplaint}
+            isOpen={!!selectedComplaint}
+            onClose={() => {
+              setSelectedComplaint(null);
+            }}
+          />
+        )}
       </div>
     </Layout>
   );
-};
-
-export default ComplaintsListPage;
+}

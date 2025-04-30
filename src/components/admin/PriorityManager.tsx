@@ -1,3 +1,5 @@
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Complaint } from '../../types';
@@ -25,10 +27,47 @@ interface Priority {
   description: string;
 }
 
+const priorityLevels = [
+  {
+    level: 'Высокий',
+    description: 'Срочные обращения, требующие немедленного реагирования. Например, проблемы безопасности или серьезные неисправности оборудования.',
+    color: 'text-red-500'
+  },
+  {
+    level: 'Средний',
+    description: 'Важные обращения, которые нужно решить в ближайшее время, но не требующие немедленной реакции.',
+    color: 'text-yellow-500'
+  },
+  {
+    level: 'Низкий',
+    description: 'Обычные обращения, которые можно обработать в порядке общей очереди.',
+    color: 'text-green-500'
+  }
+];
+
 export const PriorityManager = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Добавляем словари для перевода
+  const categoryRu: Record<string, string> = {
+    facilities: 'Объекты и инфраструктура',
+    staff: 'Персонал',
+    equipment: 'Оборудование',
+    cleanliness: 'Чистота',
+    services: 'Услуги',
+    safety: 'Безопасность',
+    other: 'Другое',
+  };
+  const statusRu: Record<string, string> = {
+    new: 'Новая',
+    processing: 'В обработке',
+    resolved: 'Решено',
+    rejected: 'Отклонено',
+    in_progress: 'В процессе',
+    closed: 'Закрыта',
+  };
 
   useEffect(() => {
     fetchData();
@@ -72,13 +111,40 @@ export const PriorityManager = () => {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <h1 className="text-3xl font-bold">Управление приоритетами</h1>
-      
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold">Управление приоритетами</h2>
+      <p className="text-gray-600 text-sm mb-6">
+        Система приоритетов помогает эффективно распределять ресурсы и время на обработку обращений.
+        Правильная расстановка приоритетов обеспечивает своевременное реагирование на важные проблемы.
+      </p>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        {priorityLevels.map((priority) => (
+          <Card key={priority.level} className="bg-white shadow-sm">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className={`${priority.color} text-lg`}>{priority.level}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-2">
+              <p className="text-gray-600 text-sm">{priority.description}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-3">Рекомендации по установке приоритетов:</h3>
+        <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
+          <li>Оценивайте срочность и важность каждого обращения</li>
+          <li>Учитывайте потенциальное влияние проблемы на работу объекта</li>
+          <li>Принимайте во внимание количество затронутых посетителей</li>
+          <li>Регулярно пересматривайте приоритеты в зависимости от текущей ситуации</li>
+        </ul>
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID обращения</TableHead>
+            <TableHead>№ / Тема обращения</TableHead>
             <TableHead>Категория</TableHead>
             <TableHead>Статус</TableHead>
             <TableHead>Приоритет</TableHead>
@@ -86,11 +152,11 @@ export const PriorityManager = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {complaints.map((complaint) => (
+          {complaints.map((complaint, idx) => (
             <TableRow key={complaint.id}>
-              <TableCell>{complaint.id}</TableCell>
-              <TableCell>{complaint.category}</TableCell>
-              <TableCell>{complaint.status}</TableCell>
+              <TableCell>{`${idx + 1}. ${complaint.title || 'Без темы'}`}</TableCell>
+              <TableCell>{categoryRu[complaint.category] || complaint.category}</TableCell>
+              <TableCell>{statusRu[complaint.status] || complaint.status}</TableCell>
               <TableCell>
                 <Select
                   value={complaint.priority_id || ''}

@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Tooltip as RechartsTooltip } from 'recharts';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -36,6 +37,112 @@ const categoryRu: Record<string, string> = {
   safety: 'Безопасность',
   other: 'Другое',
 };
+
+// Кастомный Tooltip для PieChart
+const CustomPieTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const entry = payload[0];
+    const name = entry.name;
+    const value = entry.value;
+    const isStatus = statusRu.hasOwnProperty(name);
+    const isCategory = categoryRu.hasOwnProperty(name);
+    return (
+      <div style={{ background: '#fff', border: '1px solid #ccc', padding: 8, borderRadius: 4 }}>
+        <span>
+          {(isStatus && statusRu[name]) || (isCategory && categoryRu[name]) || name}: {value}
+        </span>
+      </div>
+    );
+  }
+  return null;
+};
+
+// Многострочный label для PieChart
+const wrapLabel = (label: string, maxLen = 12) => {
+  if (label.length <= maxLen) return label;
+  const words = label.split(' ');
+  let lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    if ((current + ' ' + word).trim().length > maxLen) {
+      lines.push(current.trim());
+      current = word;
+    } else {
+      current += ' ' + word;
+    }
+  }
+  if (current) lines.push(current.trim());
+  return lines.join('\n');
+};
+
+// Кастомный label для PieChart по статусам (над диаграммой)
+const CustomPieStatusLabel = (props: any) => {
+  const { cx, cy, name, percent } = props;
+  const label = statusRu[name] || name;
+  return (
+    <text x={cx} y={cy - 100} textAnchor="middle" dominantBaseline="central" fill="#1890ff" fontSize={16}>
+      {label} {(percent * 100).toFixed(0)}%
+    </text>
+  );
+};
+
+// Кастомный label для PieChart (в центре сегмента, многострочный)
+const CustomPieSegmentLabel = (props: any) => {
+  const { x, y, name, percent } = props;
+  const label = (statusRu[name] || categoryRu[name] || name) + ` ${(percent * 100).toFixed(0)}%`;
+  // Разбиваем на две строки, если длинно
+  const maxLen = 14;
+  let first = label;
+  let second = '';
+  if (label.length > maxLen) {
+    const idx = label.lastIndexOf(' ', maxLen);
+    if (idx > 0) {
+      first = label.slice(0, idx);
+      second = label.slice(idx + 1);
+    }
+  }
+  return (
+    <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fill="#1890ff" fontSize={14}>
+      <tspan x={x} dy="-0.6em">{first}</tspan>
+      {second && <tspan x={x} dy="1.2em">{second}</tspan>}
+    </text>
+  );
+};
+
+// Универсальный кастомный label для PieChart
+const CustomPieSmartLabel = (props: any) => {
+  const { x, y, cx, cy, name, percent, viewBox, index } = props;
+  const isSingle = (viewBox && viewBox.children && viewBox.children.length === 1) || (props.sectors && props.sectors.length === 1);
+  const label = (statusRu[name] || categoryRu[name] || name) + (isSingle ? ` ${(percent * 100).toFixed(0)}%` : '');
+  if (isSingle) {
+    // Один сегмент — label над кругом
+    return (
+      <text x={cx} y={cy - 100} textAnchor="middle" dominantBaseline="central" fill="#1890ff" fontSize={18}>
+        {label}
+      </text>
+    );
+  } else {
+    // Несколько сегментов — label внутри сегмента, коротко
+    return (
+      <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fill="#1890ff" fontSize={14}>
+        {statusRu[name] || categoryRu[name] || name}
+      </text>
+    );
+  }
+};
+
+// Универсальный компонент для синей подписи над PieChart
+const BluePieLabel = ({ text }: { text: string }) => (
+  <div style={{ textAlign: 'center', color: '#1890ff', fontSize: 20, fontWeight: 600, marginBottom: 12, letterSpacing: 0.2 }}>
+    {text}
+  </div>
+);
+
+// Функция для генерации подписи с процентами
+function getPieLabelText(data: { name: string; value: number }[], total: number, dict: Record<string, string>) {
+  if (!data.length) return '';
+  return data.map(d => `${dict[d.name] || d.name} ${Math.round((d.value / total) * 100)}%`).join(', ');
+}
 
 export const Dashboard = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -103,6 +210,9 @@ export const Dashboard = () => {
     return <div>Загрузка...</div>;
   }
 
+  const statusData = getStatusData();
+  const categoryData = getCategoryData();
+
   return (
     <div className="space-y-6 p-6">
       <h1 className="text-3xl font-bold">Аналитика обращений</h1>
@@ -155,23 +265,24 @@ export const Dashboard = () => {
             <CardTitle>Распределение по статусам</CardTitle>
           </CardHeader>
           <CardContent>
+            <BluePieLabel text={getPieLabelText(statusData, statusData.reduce((a, b) => a + b.value, 0), statusRu)} />
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={getStatusData()}
+                  data={statusData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, percent }) => `${statusRu[name] || name} ${(percent * 100).toFixed(0)}%`}
+                  label={undefined}
                 >
-                  {getStatusData().map((entry, index) => (
+                  {statusData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip content={<CustomPieTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -182,23 +293,24 @@ export const Dashboard = () => {
             <CardTitle>Распределение по категориям</CardTitle>
           </CardHeader>
           <CardContent>
+            <BluePieLabel text={getPieLabelText(categoryData, categoryData.reduce((a, b) => a + b.value, 0), categoryRu)} />
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={getCategoryData()}
+                  data={categoryData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, percent }) => `${categoryRu[name] || name} ${(percent * 100).toFixed(0)}%`}
+                  label={undefined}
                 >
-                  {getCategoryData().map((entry, index) => (
+                  {categoryData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip content={<CustomPieTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>

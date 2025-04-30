@@ -4,6 +4,7 @@ export interface FileAttachment {
   url: string;
   type: string;
   size: number;
+  file?: File;
 }
 
 export interface ComplaintResponse {
@@ -18,23 +19,24 @@ export interface ComplaintResponse {
 
 export interface Complaint {
   id: string;
-  title?: string;
+  title: string;
   description: string;
-  status: ComplaintStatus;
   category: ComplaintCategory;
   location: string;
-  locationId?: string;
-  locationName?: string;
-  submittedAt?: string;
-  attachments?: FileAttachment[];
-  response?: ComplaintResponse;
-  user_id?: string;
+  location_id: string;
+  locationname: string;
+  user_id: string;
+  status: ComplaintStatus;
   created_at: string;
   updated_at: string;
+  submittedat?: string;
+  contact_phone?: string;
+  contact_email?: string;
+  rating?: number;
+  attachments?: (string | FileAttachment)[];
+  response?: ComplaintResponse;
   priority_id?: string;
   assignee_id?: string;
-  contact_email?: string;
-  contact_phone?: string;
 }
 
 export type ComplaintStatus = 'new' | 'processing' | 'resolved' | 'rejected' | 'in_progress' | 'closed';

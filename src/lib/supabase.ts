@@ -1,15 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/supabase';
+import type { Database } from './database.types';
 
-const supabaseUrl = 'https://mlabfssqfvufipwvegpe.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sYWJmc3NxZnZ1Zmlwd3ZlZ3BlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQzMDc4MTIsImV4cCI6MjA1OTg4MzgxMn0.tUsDFlR5lrdXf-RsQvhnU4x5fsKvtIU9xrxiedVLSK4';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-});
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 export const checkTables = async () => {
   try {
@@ -65,4 +64,132 @@ export const checkTables = async () => {
     console.error('Ошибка при проверке таблиц:', error);
     return false;
   }
-}; 
+};
+
+// Инициализация хранилища
+export async function initStorage() {
+  try {
+    console.log('Checking for existing storage buckets...');
+    
+    // Создаем бакет с публичным доступом
+    const { data: bucketData, error: createError } = await supabase.storage.createBucket('complaint_files', {
+      public: true,
+      fileSizeLimit: 10485760, // 10MB
+      allowedMimeTypes: ['image/*', 'video/*']
+    });
+
+    if (createError) {
+      if (createError.message.includes('already exists')) {
+        console.log('Bucket already exists, updating settings...');
+        
+        // Обновляем настройки существующего бакета
+        const { error: updateError } = await supabase.storage.updateBucket('complaint_files', {
+          public: true,
+          fileSizeLimit: 10485760,
+          allowedMimeTypes: ['image/*', 'video/*']
+        });
+        
+        if (updateError) {
+          console.error('Error updating bucket settings:', updateError);
+        } else {
+          console.log('Bucket settings updated successfully');
+        }
+      } else {
+        console.error('Error creating bucket:', createError);
+      }
+    } else {
+      console.log('Bucket created successfully:', bucketData);
+    }
+
+    console.log('Storage initialization completed');
+  } catch (error) {
+    console.error('Error initializing storage:', error);
+  }
+}
+
+// Функция для создания политик доступа к хранилищу
+async function createStoragePolicies() {
+  try {
+    // SQL для создания политик
+    const policies = [
+      `
+      CREATE POLICY IF NOT EXISTS "Публичный доступ к файлам"
+      ON storage.objects FOR SELECT
+      USING (bucket_id = 'complaint_files');
+      `,
+      `
+      CREATE POLICY IF NOT EXISTS "Разрешить загрузку файлов всем"
+      ON storage.objects FOR INSERT
+      WITH CHECK (bucket_id = 'complaint_files');
+      `,
+      `
+      CREATE POLICY IF NOT EXISTS "Разрешить обновление файлов всем"
+      ON storage.objects FOR UPDATE
+      USING (bucket_id = 'complaint_files');
+      `,
+      `
+      CREATE POLICY IF NOT EXISTS "Разрешить удаление файлов всем"
+      ON storage.objects FOR DELETE
+      USING (bucket_id = 'complaint_files');
+      `
+    ];
+
+    // Применяем каждую политику
+    for (const policy of policies) {
+      const { error } = await supabase.rpc('apply_storage_policy', { policy_sql: policy });
+      if (error && !error.message.includes('already exists')) {
+        console.error('Error creating storage policy:', error);
+      }
+    }
+
+    console.log('Storage policies created successfully');
+  } catch (error) {
+    console.error('Error creating storage policies:', error);
+  }
+}
+
+// Применение миграции
+export async function applyMigrations() {
+  try {
+    console.log('Applying database migrations...');
+    
+    const response = await fetch('/src/lib/migrations/001_initial_schema.sql');
+    const sqlContent = await response.text();
+    
+    const { error } = await supabase.rpc('apply_migration', {
+      sql_content: sqlContent
+    });
+
+    if (error) {
+      if (error.message.includes('apply_migration')) {
+        console.error('Error: Function apply_migration does not exist. Please create it in the Supabase dashboard.');
+        console.log('SQL to create the function:');
+        console.log(`
+          CREATE OR REPLACE FUNCTION apply_migration(sql_content TEXT)
+          RETURNS void
+          LANGUAGE plpgsql
+          SECURITY DEFINER
+          AS $$
+          BEGIN
+            EXECUTE sql_content;
+          END;
+          $$;
+        `);
+      } else {
+        console.error('Error applying migrations:', error);
+      }
+    } else {
+      console.log('Migrations applied successfully');
+    }
+  } catch (error) {
+    console.error('Error in migration process:', error);
+    throw error;
+  }
+}
+
+// Инициализируем хранилище
+initStorage().then(() => {
+  console.log('Storage initialization completed');
+}).catch(error => {
+  console.error('Storage initialization failed:', error);
+}); 

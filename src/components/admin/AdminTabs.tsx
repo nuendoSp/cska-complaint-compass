@@ -31,6 +31,27 @@ import { FeedbackSystem } from './FeedbackSystem';
 import { Surveys } from './Surveys';
 import { Statistics } from './Statistics';
 import SurveysManager from './SurveysManager';
+import { format } from 'date-fns';
+import { Rating } from '@/components/ui/rating';
+
+const statusRu: Record<string, string> = {
+  new: 'Новая',
+  processing: 'В обработке',
+  resolved: 'Решено',
+  rejected: 'Отклонено',
+  in_progress: 'В процессе',
+  closed: 'Закрыта',
+};
+
+const categoryRu: Record<string, string> = {
+  facilities: 'Объекты и инфраструктура',
+  staff: 'Персонал',
+  equipment: 'Оборудование',
+  cleanliness: 'Чистота',
+  services: 'Услуги',
+  safety: 'Безопасность',
+  other: 'Другое',
+};
 
 const AdminTabs: React.FC = () => {
   const navigate = useNavigate();
@@ -44,7 +65,6 @@ const AdminTabs: React.FC = () => {
     complaintId: null
   });
   const [responseText, setResponseText] = useState('');
-  const [adminName, setAdminName] = useState('');
   const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; complaint: Complaint | null }>({
     isOpen: false,
     complaint: null
@@ -54,6 +74,7 @@ const AdminTabs: React.FC = () => {
     complaintIds: []
   });
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+  const [detailsDialog, setDetailsDialog] = useState<{ isOpen: boolean; complaint: Complaint | null }>({ isOpen: false, complaint: null });
 
   const handleUpdateStatus = (id: string, status: Complaint['status']) => {
     updateComplaint(id, { status });
@@ -61,7 +82,12 @@ const AdminTabs: React.FC = () => {
   };
 
   const handleOpenResponseDialog = (complaint: Complaint) => {
+    setResponseDialog({ isOpen: true, complaintId: complaint.id });
     setSelectedComplaint(complaint);
+  };
+
+  const handleOpenDetailsDialog = (complaint: Complaint) => {
+    setDetailsDialog({ isOpen: true, complaint });
   };
 
   const handleCloseResponseDialog = () => {
@@ -70,18 +96,14 @@ const AdminTabs: React.FC = () => {
       complaintId: null
     });
     setResponseText('');
-    setAdminName('');
   };
 
-  const handleSubmitResponse = () => {
-    if (!responseDialog.complaintId || !responseText.trim() || !adminName.trim()) {
-      toast.error('Пожалуйста, заполните все поля');
-      return;
-    }
+  const handleSubmitResponse = async () => {
+    if (!responseDialog.complaintId || !responseText.trim()) return;
 
-    respondToComplaint(responseDialog.complaintId, {
+    await respondToComplaint(responseDialog.complaintId, {
       text: responseText,
-      adminName,
+      adminName: 'Администратор',
       respondedAt: new Date().toISOString()
     });
 
@@ -141,6 +163,10 @@ const AdminTabs: React.FC = () => {
     });
   };
 
+  const handleCloseDetailsDialog = () => {
+    setDetailsDialog({ isOpen: false, complaint: null });
+  };
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex items-center mb-6">
@@ -160,11 +186,9 @@ const AdminTabs: React.FC = () => {
           <TabsTrigger value="dashboard">Дашборд</TabsTrigger>
           <TabsTrigger value="complaints">Обращения</TabsTrigger>
           <TabsTrigger value="surveys">Опросы</TabsTrigger>
-          <TabsTrigger value="templates">Шаблоны ответов</TabsTrigger>
           <TabsTrigger value="priorities">Приоритеты</TabsTrigger>
           <TabsTrigger value="assignees">Исполнители</TabsTrigger>
           <TabsTrigger value="history">История изменений</TabsTrigger>
-          <TabsTrigger value="feedback">Обратная связь</TabsTrigger>
           <TabsTrigger value="statistics">Статистика</TabsTrigger>
           <TabsTrigger value="export">Экспорт данных</TabsTrigger>
         </TabsList>
@@ -178,6 +202,7 @@ const AdminTabs: React.FC = () => {
             complaints={complaints}
             onUpdateStatus={handleUpdateStatus}
             onOpenResponseDialog={handleOpenResponseDialog}
+            onOpenDetailsDialog={handleOpenDetailsDialog}
             onDeleteComplaint={handleDeleteComplaint}
             onDeleteResponse={handleDeleteResponse}
             onDeleteMultipleComplaints={handleDeleteMultipleComplaints}
@@ -194,10 +219,6 @@ const AdminTabs: React.FC = () => {
           <SurveysManager />
         </TabsContent>
 
-        <TabsContent value="templates">
-          <ResponseTemplates />
-        </TabsContent>
-
         <TabsContent value="priorities">
           <PriorityManager />
         </TabsContent>
@@ -208,10 +229,6 @@ const AdminTabs: React.FC = () => {
 
         <TabsContent value="history">
           <ChangeHistory />
-        </TabsContent>
-
-        <TabsContent value="feedback">
-          <FeedbackSystem />
         </TabsContent>
 
         <TabsContent value="statistics">
@@ -229,8 +246,6 @@ const AdminTabs: React.FC = () => {
         onSubmit={handleSubmitResponse}
         responseText={responseText}
         setResponseText={setResponseText}
-        adminName={adminName}
-        setAdminName={setAdminName}
       />
 
       <Dialog open={deleteDialog.isOpen} onOpenChange={handleCloseDeleteDialog}>
@@ -267,6 +282,73 @@ const AdminTabs: React.FC = () => {
             <Button variant="destructive" onClick={handleConfirmMultipleDelete}>
               Удалить
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={detailsDialog.isOpen} onOpenChange={handleCloseDetailsDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Детали обращения</DialogTitle>
+          </DialogHeader>
+          {detailsDialog.complaint && (
+            <div>
+              <div><b>Тема:</b> {detailsDialog.complaint.title}</div>
+              <div><b>Описание:</b> {detailsDialog.complaint.description}</div>
+              <div><b>Категория:</b> {categoryRu[detailsDialog.complaint.category] || detailsDialog.complaint.category}</div>
+              <div><b>Статус:</b> {statusRu[detailsDialog.complaint.status] || detailsDialog.complaint.status}</div>
+              <div><b>Дата:</b> {format(new Date(detailsDialog.complaint.created_at), 'dd.MM.yyyy HH:mm')}</div>
+              <div><b>Локация:</b> {detailsDialog.complaint.location}</div>
+              
+              {detailsDialog.complaint.rating && (
+                <div className="mt-4">
+                  <b>Оценка:</b>
+                  <div className="mt-2">
+                    <Rating value={detailsDialog.complaint.rating} readonly size="md" />
+                  </div>
+                </div>
+              )}
+
+              {detailsDialog.complaint.attachments && detailsDialog.complaint.attachments.length > 0 && (
+                <div className="mt-4">
+                  <b>Вложения:</b>
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    {detailsDialog.complaint.attachments.map((attachment, index) => {
+                      const attachmentUrl = typeof attachment === 'string' ? attachment : attachment.url;
+                      const attachmentName = typeof attachment === 'string' ? `Вложение ${index + 1}` : attachment.name;
+                      
+                      return (
+                        <div key={index} className="relative group">
+                          <a 
+                            href={attachmentUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="block"
+                          >
+                            <img
+                              src={attachmentUrl}
+                              alt={attachmentName}
+                              className="w-full h-32 object-cover rounded-md hover:opacity-90 transition-opacity"
+                            />
+                            <p className="text-xs text-gray-500 truncate mt-1">{attachmentName}</p>
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-4">
+                <b>Ответ администрации:</b><br/>
+                {detailsDialog.complaint.response && detailsDialog.complaint.response.text
+                  ? <span>{detailsDialog.complaint.response.text}</span>
+                  : <span className="text-gray-500">Ещё не дан</span>}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseDetailsDialog}>Закрыть</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

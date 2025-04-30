@@ -60,16 +60,20 @@ export default function ComplaintDetailPage() {
   return (
     <Card className="w-full max-w-4xl mx-auto mt-8">
       <CardHeader>
-        <CardTitle>Детали жалобы</CardTitle>
+        <CardTitle>{complaint.title || 'Без темы'}</CardTitle>
         <CardDescription>
-          ID: {complaint.id}
+          Обращение от {formatDate(new Date(complaint.submittedAt || complaint.created_at || Date.now()))}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div>
             <h3 className="font-semibold">Локация</h3>
-            <p>{complaint.locationName || 'Не указано'}</p>
+            <p>ТЦ "ЦСКА"</p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="text-gray-600">Телефон заявителя:</div>
+            <div>{complaint.contact_phone || 'Не указан'}</div>
           </div>
           <div>
             <h3 className="font-semibold">Статус</h3>

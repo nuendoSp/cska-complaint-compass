@@ -1,34 +1,25 @@
-export type ComplaintCategory = 'Facilities' | 'Staff' | 'Equipment' | 'Cleanliness' | 'Services' | 'Safety' | 'Other';
-export type ComplaintStatus = 'new' | 'processing' | 'resolved' | 'rejected';
+import { Database } from '../lib/database.types'
 
-export interface FileAttachment {
-  id: string;
-  name: string;
-  url: string;
-  type: 'image' | 'video';
+export type ComplaintCategory = Database['public']['Enums']['complaint_category']
+export type ComplaintStatus = Database['public']['Enums']['complaint_status']
+export type UserRole = Database['public']['Enums']['user_role']
+
+export type FileAttachment = {
+  id: string
+  url: string
+  name: string
+  type: string
+  size: number
+  file?: File
 }
 
-export interface ComplaintResponse {
-  id: string;
-  text: string;
-  adminName: string;
-  respondedAt: string;
+export type Complaint = Database['public']['Tables']['complaints']['Row'] & {
+  response?: ComplaintResponse
 }
 
-export interface Complaint {
-  id: string;
-  title: string;
-  description: string;
-  location: string;
-  category: ComplaintCategory;
-  status: ComplaintStatus;
-  submittedAt: string;
-  updatedAt: string;
-  response?: ComplaintResponse;
-  attachments?: FileAttachment[];
-  contact_email?: string;
-  contact_phone?: string;
-}
+export type ComplaintResponse = Database['public']['Tables']['complaint_responses']['Row']
+
+export type Assignee = Database['public']['Tables']['assignees']['Row']
 
 export interface ContentManagement {
   component_name: string;

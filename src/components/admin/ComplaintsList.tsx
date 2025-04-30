@@ -20,6 +20,8 @@ import { Input } from '@/components/ui/input';
 import { FileText, Search, Clock, CheckCircle2, AlertCircle, XCircle, MessageSquare } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import { Complaint, ComplaintCategory } from '@/types';
+import { supabase } from '@/lib/supabase';
+import { Rating } from '@/components/ui/rating';
 
 interface ComplaintsListProps {
   complaints: Complaint[];
@@ -31,6 +33,7 @@ interface ComplaintsListProps {
   setFilterStatus: (status: Complaint['status'] | 'all') => void;
   onUpdateStatus: (id: string, status: Complaint['status']) => void;
   onOpenResponseDialog: (complaint: Complaint) => void;
+  onOpenDetailsDialog: (complaint: Complaint) => void;
   onDeleteResponse: (complaintId: string, responseId: string) => void;
   onDeleteComplaint: (complaintId: string) => void;
   onDeleteMultipleComplaints: (complaintIds: string[]) => void;
@@ -46,6 +49,7 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
   setFilterStatus,
   onUpdateStatus,
   onOpenResponseDialog,
+  onOpenDetailsDialog,
   onDeleteResponse,
   onDeleteComplaint,
   onDeleteMultipleComplaints,
@@ -208,27 +212,48 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
               <CardContent>
                 <p className="text-gray-700 mb-4">{complaint.description}</p>
                 
+                {complaint.rating && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-gray-500 mb-2">Оценка:</p>
+                    <Rating value={complaint.rating} readonly size="md" />
+                  </div>
+                )}
+                
                 {complaint.attachments && complaint.attachments.length > 0 && (
                   <div className="mb-4">
                     <p className="text-sm font-medium text-gray-500 mb-2">Вложения:</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {complaint.attachments.map(attachment => (
-                        <div key={attachment.id} className="relative">
-                          {attachment.type === 'image' ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {complaint.attachments.map((attachment, index) => {
+                        console.log('Attachment in ComplaintsList:', attachment);
+                        const isString = typeof attachment === 'string';
+                        
+                        const url = isString ? attachment : attachment.url;
+                        const name = isString ? `Вложение ${index + 1}` : attachment.name;
+                        
+                        console.log('Processing attachment:', { url, name });
+                        
+                        if (!url) {
+                          console.error('No URL for attachment:', attachment);
+                          return null;
+                        }
+                        
+                        return (
+                          <div key={isString ? index : attachment.id} className="relative group">
                             <img
-                              src={attachment.url}
-                              alt={attachment.name}
-                              className="w-full h-24 object-cover rounded-md"
+                              src={url}
+                              alt={name}
+                              className="w-full h-24 object-cover rounded-md cursor-pointer"
+                              onClick={() => window.open(url, '_blank')}
+                              onError={(e) => {
+                                console.error('Image load error:', e);
+                                const target = e.target as HTMLImageElement;
+                                console.log('Failed URL:', target.src);
+                              }}
                             />
-                          ) : (
-                            <video
-                              src={attachment.url}
-                              controls
-                              className="w-full h-24 object-cover rounded-md"
-                            />
-                          )}
-                        </div>
-                      ))}
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity" />
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -266,7 +291,7 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
 
               <CardFooter className="flex justify-between">
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="gap-1" onClick={() => onOpenResponseDialog(complaint)}>
+                  <Button variant="outline" size="sm" className="gap-1" onClick={() => onOpenDetailsDialog(complaint)}>
                     <FileText className="h-3.5 w-3.5" />
                     Подробнее
                   </Button>
