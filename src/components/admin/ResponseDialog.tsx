@@ -44,8 +44,18 @@ const ResponseDialog: React.FC<ResponseDialogProps> = ({
         const { data } = await supabase
           .from('response_templates')
           .select('*')
-          .order('created_at', { ascending: false });
-        setTemplates(data || []);
+          .order('title', { ascending: true });
+        
+        // Удаляем дубликаты по title
+        const uniqueTemplates = data?.reduce((acc: ResponseTemplate[], current) => {
+          const exists = acc.find(item => item.title === current.title);
+          if (!exists) {
+            acc.push(current);
+          }
+          return acc;
+        }, []) || [];
+        
+        setTemplates(uniqueTemplates);
         setLoadingTemplates(false);
         setSelectedTemplateId('');
         setResponseText('');

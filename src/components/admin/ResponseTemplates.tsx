@@ -24,7 +24,6 @@ interface ResponseTemplate {
   id: string;
   title: string;
   content: string;
-  category: string;
   created_at: string;
 }
 
@@ -35,8 +34,7 @@ export const ResponseTemplates = () => {
   const [editingTemplate, setEditingTemplate] = useState<ResponseTemplate | null>(null);
   const [formData, setFormData] = useState({
     title: '',
-    content: '',
-    category: ''
+    content: ''
   });
 
   useEffect(() => {
@@ -51,7 +49,17 @@ export const ResponseTemplates = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTemplates(data || []);
+      
+      // Удаляем дубликаты по title
+      const uniqueTemplates = data?.reduce((acc: ResponseTemplate[], current) => {
+        const exists = acc.find(item => item.title === current.title);
+        if (!exists) {
+          acc.push(current);
+        }
+        return acc;
+      }, []) || [];
+      
+      setTemplates(uniqueTemplates);
     } catch (error) {
       console.error('Error fetching templates:', error);
     } finally {
@@ -79,7 +87,7 @@ export const ResponseTemplates = () => {
 
       await fetchTemplates();
       setIsDialogOpen(false);
-      setFormData({ title: '', content: '', category: '' });
+      setFormData({ title: '', content: '' });
       setEditingTemplate(null);
     } catch (error) {
       console.error('Error saving template:', error);
@@ -90,8 +98,7 @@ export const ResponseTemplates = () => {
     setEditingTemplate(template);
     setFormData({
       title: template.title,
-      content: template.content,
-      category: template.category
+      content: template.content
     });
     setIsDialogOpen(true);
   };
@@ -141,15 +148,6 @@ export const ResponseTemplates = () => {
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="category">Категория</label>
-                <Input
-                  id="category"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
                 <label htmlFor="content">Содержание</label>
                 <Textarea
                   id="content"
@@ -169,7 +167,6 @@ export const ResponseTemplates = () => {
         <TableHeader>
           <TableRow>
             <TableHead>Заголовок</TableHead>
-            <TableHead>Категория</TableHead>
             <TableHead>Содержание</TableHead>
             <TableHead>Действия</TableHead>
           </TableRow>
@@ -178,7 +175,6 @@ export const ResponseTemplates = () => {
           {templates.map((template) => (
             <TableRow key={template.id}>
               <TableCell>{template.title}</TableCell>
-              <TableCell>{template.category}</TableCell>
               <TableCell className="max-w-xs truncate">{template.content}</TableCell>
               <TableCell>
                 <div className="flex gap-2">

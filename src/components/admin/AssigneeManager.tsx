@@ -25,10 +25,37 @@ interface Assignee {
   role: string;
 }
 
+interface Location {
+  id: string;
+  name: string;
+  address: string;
+}
+
 export const AssigneeManager = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [assignees, setAssignees] = useState<Assignee[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Словари для перевода
+  const categoryRu: Record<string, string> = {
+    facilities: 'Объекты и инфраструктура',
+    staff: 'Персонал',
+    equipment: 'Оборудование',
+    cleanliness: 'Чистота',
+    services: 'Услуги',
+    safety: 'Безопасность',
+    other: 'Другое',
+  };
+
+  const statusRu: Record<string, string> = {
+    new: 'Новая',
+    processing: 'В обработке',
+    resolved: 'Решено',
+    rejected: 'Отклонено',
+    in_progress: 'В процессе',
+    closed: 'Закрыта',
+  };
 
   useEffect(() => {
     fetchData();
@@ -36,16 +63,19 @@ export const AssigneeManager = () => {
 
   const fetchData = async () => {
     try {
-      const [complaintsData, assigneesData] = await Promise.all([
+      const [complaintsData, assigneesData, locationsData] = await Promise.all([
         supabase.from('complaints').select('*').order('created_at', { ascending: false }),
-        supabase.from('assignees').select('*').order('name')
+        supabase.from('assignees').select('*').order('name'),
+        supabase.from('locations').select('*').order('name')
       ]);
 
       if (complaintsData.error) throw complaintsData.error;
       if (assigneesData.error) throw assigneesData.error;
+      if (locationsData.error) throw locationsData.error;
 
       setComplaints(complaintsData.data || []);
       setAssignees(assigneesData.data || []);
+      setLocations(locationsData.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -78,34 +108,31 @@ export const AssigneeManager = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID обращения</TableHead>
+            <TableHead>Тема обращения</TableHead>
             <TableHead>Категория</TableHead>
             <TableHead>Статус</TableHead>
-            <TableHead>Ответственный</TableHead>
+            <TableHead>Локация</TableHead>
             <TableHead>Действия</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {complaints.map((complaint) => (
             <TableRow key={complaint.id}>
-              <TableCell>{complaint.id}</TableCell>
-              <TableCell>{complaint.category}</TableCell>
-              <TableCell>{complaint.status}</TableCell>
+              <TableCell>{complaint.title || 'Без темы'}</TableCell>
+              <TableCell>{categoryRu[complaint.category] || complaint.category}</TableCell>
+              <TableCell>{statusRu[complaint.status] || complaint.status}</TableCell>
               <TableCell>
                 <Select
-                  value={complaint.assignee_id || ''}
+                  value={complaint.location_id || ''}
                   onValueChange={(value) => handleAssigneeChange(complaint.id, value)}
                 >
                   <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Выберите ответственного" />
+                    <SelectValue placeholder="Выберите локацию" />
                   </SelectTrigger>
                   <SelectContent>
-                    {assignees.map((assignee) => (
-                      <SelectItem key={assignee.id} value={assignee.id}>
-                        <div className="flex flex-col">
-                          <span>{assignee.name}</span>
-                          <span className="text-sm text-gray-500">{assignee.role}</span>
-                        </div>
+                    {locations.map((location) => (
+                      <SelectItem key={location.id} value={location.id}>
+                        {location.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

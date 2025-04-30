@@ -71,36 +71,47 @@ export async function initStorage() {
   try {
     console.log('Checking for existing storage buckets...');
     
-    // Создаем бакет с публичным доступом
-    const { data: bucketData, error: createError } = await supabase.storage.createBucket('complaint_files', {
-      public: true,
-      fileSizeLimit: 10485760, // 10MB
-      allowedMimeTypes: ['image/*', 'video/*']
-    });
-
-    if (createError) {
-      if (createError.message.includes('already exists')) {
-        console.log('Bucket already exists, updating settings...');
-        
-        // Обновляем настройки существующего бакета
-        const { error: updateError } = await supabase.storage.updateBucket('complaint_files', {
-          public: true,
-          fileSizeLimit: 10485760,
-          allowedMimeTypes: ['image/*', 'video/*']
-        });
-        
-        if (updateError) {
-          console.error('Error updating bucket settings:', updateError);
-        } else {
-          console.log('Bucket settings updated successfully');
-        }
-      } else {
-        console.error('Error creating bucket:', createError);
-      }
-    } else {
-      console.log('Bucket created successfully:', bucketData);
+    // Проверяем существование бакета
+    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+    
+    if (listError) {
+      console.error('Error listing buckets:', listError);
+      return;
     }
 
+    const bucketExists = buckets?.some(bucket => bucket.name === 'complaint_files');
+    
+    if (!bucketExists) {
+      // Создаем бакет с публичным доступом
+      const { data: bucketData, error: createError } = await supabase.storage.createBucket('complaint_files', {
+        public: true,
+        fileSizeLimit: 10485760, // 10MB
+        allowedMimeTypes: ['image/*', 'video/*']
+      });
+
+      if (createError) {
+        console.error('Error creating bucket:', createError);
+        return;
+      }
+      console.log('Bucket created successfully:', bucketData);
+    } else {
+      // Обновляем настройки существующего бакета
+      const { error: updateError } = await supabase.storage.updateBucket('complaint_files', {
+        public: true,
+        fileSizeLimit: 10485760,
+        allowedMimeTypes: ['image/*', 'video/*']
+      });
+      
+      if (updateError) {
+        console.error('Error updating bucket settings:', updateError);
+      } else {
+        console.log('Bucket settings updated successfully');
+      }
+    }
+
+    // Создаем политики доступа
+    await createStoragePolicies();
+    
     console.log('Storage initialization completed');
   } catch (error) {
     console.error('Error initializing storage:', error);
