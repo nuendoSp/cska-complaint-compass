@@ -104,7 +104,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           description: complaint.description,
           category: (complaint.category as ComplaintCategory) || 'other',
           location: complaint.location || 'ТЦ "ЦСКА"',
-          location_id: complaint.location_id || 'cska_default',
+          location_id: complaint.location_id || '',
           locationname: complaint.locationname || complaint.location || 'ТЦ "ЦСКА"',
           user_id: complaint.user_id || '',
           status: (complaint.status as ComplaintStatus) || 'new',
@@ -152,7 +152,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         description: complaint.description.trim(),
         category: complaint.category || 'other',
         location: complaint.location || 'ТЦ "ЦСКА"',
-        location_id: complaint.location_id || 'cska_default',
+        location_id: complaint.location_id || '',
         locationname: complaint.locationname || 'ТЦ "ЦСКА"',
         user_id: complaint.user_id || 'anonymous',
         status: 'new' as const,
@@ -225,6 +225,14 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const updateComplaint = async (id: string, updates: Partial<Complaint>) => {
     try {
+      // Получаем старое обращение для сравнения
+      const { data: oldData, error: oldError } = await supabase
+        .from('complaints')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (oldError) throw oldError;
+
       const { data, error } = await supabase
         .from('complaints')
         .update({
@@ -236,9 +244,29 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .single();
 
       if (error) throw error;
-      
-      if (!data) {
-        throw new Error('No data returned after update');
+      if (!data) throw new Error('No data returned after update');
+
+      // Проверяем изменения и пишем в change_history
+      const fieldsToTrack: (keyof Complaint)[] = ['status', 'location_id', 'assignee_id'];
+      for (const field of fieldsToTrack) {
+        if (
+          (updates as Partial<Complaint>)[field] !== undefined &&
+          (oldData as Complaint)[field] !== (updates as Partial<Complaint>)[field]
+        ) {
+          const { error: chError } = await supabase.from('change_history').insert({
+            complaint_id: id,
+            field_name: field,
+            old_value: (oldData as Complaint)[field] ? String((oldData as Complaint)[field]) : '',
+            new_value: (updates as Partial<Complaint>)[field] ? String((updates as Partial<Complaint>)[field]) : '',
+            changed_by: null, // Можно подставить user_id, если есть авторизация
+            changed_at: new Date().toISOString(),
+          });
+          if (chError) {
+            console.error('Ошибка при вставке в change_history:', chError);
+          } else {
+            console.log('Успешно добавлено в change_history:', field, id);
+          }
+        }
       }
 
       const formattedData = {
@@ -266,9 +294,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         assignee_id: data.assignee_id,
         attachments: Array.isArray(data.attachments) ? data.attachments : []
       };
-      
       setComplaints(prev => prev.map(c => c.id === id ? formattedData : c));
-      
       toast.success('Жалоба успешно обновлена');
     } catch (error) {
       console.error('Error updating complaint:', error);
@@ -402,7 +428,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         description: data.description,
         status: (data.status as ComplaintStatus) || 'new',
         location: data.location || 'ТЦ "ЦСКА"',
-        location_id: data.location_id || 'cska_default',
+        location_id: data.location_id || '',
         locationname: data.locationname || data.location || 'ТЦ "ЦСКА"',
         created_at: data.created_at,
         updated_at: data.updated_at,

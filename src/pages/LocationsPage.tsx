@@ -6,7 +6,7 @@ import { MapPin } from 'lucide-react';
 
 // Updated locations with outdoor clay courts, indoor hard courts, added toilets and staff
 const locations = [
-  { id: 'outdoor-clay-courts', name: 'Корты на улице - Грунт', description: 'Теннисные корты с грунтовым покрытием' },
+  { id: 'outdoor-clay-courts', name: 'Корты на улице - Грунт или Хард', description: 'Теннисные корты с грунтовым и твердым покрытием' },
   { id: 'indoor-hard-courts', name: 'Корты в зале - Хард', description: 'Теннисные корты с твердым покрытием' },
   { id: 'locker-rooms', name: 'Раздевалки', description: 'Мужские и женские раздевалки' },
   { id: 'cafe', name: 'Кафе', description: 'Зона питания' },

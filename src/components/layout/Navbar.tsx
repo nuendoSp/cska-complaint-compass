@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
@@ -10,8 +10,10 @@ const Navbar: React.FC = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center space-x-6">
-            <span className="font-bold text-2xl">ТЦ "ЦСКА"</span>
-            <span className="text-red-500 font-semibold text-lg hidden sm:inline ml-4">Книга жалоб и предложений</span>
+            <span className="font-bold text-2xl"></span>
+            <Link to="/" className="w-full">
+              <span className="w-full text-right block text-red-500 font-semibold text-xl sm:text-2xl">АФ РОО "Федерация тенниса"</span>
+            </Link>
           </Link>
           
           {/* Desktop nav */}

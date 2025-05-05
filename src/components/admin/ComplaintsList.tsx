@@ -171,13 +171,13 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Все категории</SelectItem>
-              <SelectItem value="Facilities">Помещения</SelectItem>
-              <SelectItem value="Staff">Персонал</SelectItem>
-              <SelectItem value="Equipment">Оборудование</SelectItem>
-              <SelectItem value="Cleanliness">Чистота</SelectItem>
-              <SelectItem value="Services">Услуги</SelectItem>
-              <SelectItem value="Safety">Безопасность</SelectItem>
-              <SelectItem value="Other">Другое</SelectItem>
+              <SelectItem value="facilities">Объекты и инфраструктура</SelectItem>
+              <SelectItem value="staff">Персонал</SelectItem>
+              <SelectItem value="equipment">Оборудование</SelectItem>
+              <SelectItem value="cleanliness">Чистота</SelectItem>
+              <SelectItem value="services">Услуги</SelectItem>
+              <SelectItem value="safety">Безопасность</SelectItem>
+              <SelectItem value="other">Другое</SelectItem>
             </SelectContent>
           </Select>
           
@@ -227,7 +227,7 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
                           Обращение от {format(new Date(complaint.created_at || Date.now()), 'dd.MM.yyyy HH:mm')} — {complaint.title || 'Без темы'}
                         </CardTitle>
                         <CardDescription>
-                          Категория: {categoryRu[complaint.category] || 'Другое'} | Локация: {'ТЦ "ЦСКА"'}
+                          Категория: {categoryRu[complaint.category] || 'Другое'} | Локация: {complaint.locationname || complaint.location || ''}
                         </CardDescription>
                       </div>
                     </div>

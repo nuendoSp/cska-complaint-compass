@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useComplaintContext } from '@/context/ComplaintContext';
@@ -19,6 +19,13 @@ import { ArrowLeft, Search, Clock, CheckCircle2, AlertCircle, XCircle, FileText 
 import { Complaint, ComplaintCategory } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { ComplaintDetailsDialog } from '@/components/ComplaintDetailsDialog';
+import { supabase } from '@/lib/supabase';
+
+const DEFAULT_LOCATIONS = [
+  { id: 'cska_default', name: 'Теннисный центр ЦСКА' },
+  { id: 'ace_default', name: 'Теннисный центр ЭЙС' },
+  { id: 'adk_default', name: 'Теннисный центр АДК' },
+];
 
 export default function ComplaintsListPage() {
   const navigate = useNavigate();
@@ -27,15 +34,25 @@ export default function ComplaintsListPage() {
   const [filterCategory, setFilterCategory] = useState<ComplaintCategory | 'all'>('all');
   const [filterLocation, setFilterLocation] = useState<string>('all');
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+  const [locations, setLocations] = useState<{ id: string; name: string }[]>(DEFAULT_LOCATIONS);
 
-  // Get unique locations for filter
-  const uniqueLocations = ['cska_default'];
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const { data, error } = await supabase.from('locations').select('id, name');
+      if (!error && data && data.length > 0) setLocations(data);
+      else setLocations(DEFAULT_LOCATIONS);
+    };
+    fetchLocations();
+  }, []);
 
   // Filter complaints based on search term and filters
-  const filteredComplaints = complaints.filter(complaint => 
-    (complaint.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (complaint.title || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredComplaints = complaints.filter(complaint => {
+    const matchesSearch = (complaint.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (complaint.title || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = filterCategory === 'all' || complaint.category === filterCategory;
+    const matchesLocation = filterLocation === 'all' || complaint.location_id === filterLocation || complaint.location === filterLocation;
+    return matchesSearch && matchesCategory && matchesLocation;
+  });
 
   // Sort by date, newest first
   const sortedComplaints = [...filteredComplaints].sort((a: Complaint, b: Complaint) => {
@@ -143,10 +160,8 @@ export default function ComplaintsListPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Все локации</SelectItem>
-                {uniqueLocations.map((locationId) => (
-                  <SelectItem key={locationId || 'unknown'} value={locationId || 'unknown'}>
-                    {'ТЦ "ЦСКА"'}
-                  </SelectItem>
+                {locations.map((loc) => (
+                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -180,7 +195,7 @@ export default function ComplaintsListPage() {
                       <TableCell className="whitespace-nowrap">
                         {complaint.submittedat ? formatDate(new Date(complaint.submittedat)) : formatDate(new Date(complaint.created_at || Date.now()))}
                       </TableCell>
-                      <TableCell>{'ТЦ "ЦСКА"'}</TableCell>
+                      <TableCell>{complaint.locationname || complaint.location || ''}</TableCell>
                       <TableCell>{categoryRu[complaint.category || 'other'] || 'Другое'}</TableCell>
                       <TableCell>{getStatusBadge(complaint.status || 'new')}</TableCell>
                       <TableCell className="max-w-xs truncate">

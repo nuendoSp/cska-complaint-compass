@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { FileText } from 'lucide-react';
@@ -9,9 +9,9 @@ const Index = () => {
     <Layout>
       <div className="flex flex-col items-center justify-center pb-12">
         <div className="text-center mb-12 mt-8">
-          <h1 className="text-3xl font-bold mb-4">Книга жалоб и предложений ТЦ "ЦСКА"</h1>
+          <h1 className="text-3xl font-bold mb-4">Книга отзывов и предложений</h1>
           <p className="text-lg text-gray-600 mb-8">
-            Помогите нам улучшить качество обслуживания в теннисном центре ЦСКА.
+            Помогите нам улучшить качество обслуживания.
           </p>
         </div>
 
@@ -33,9 +33,9 @@ const Index = () => {
         </div>
         
         <div className="mt-12 max-w-2xl text-center">
-          <h2 className="text-2xl font-semibold mb-4">О Книге жалоб и предложений ТЦ "ЦСКА"</h2>
+          <h2 className="text-2xl font-semibold mb-4">О Книге отзывов и предложений</h2>
           <p className="text-gray-600 mb-4">
-            Мы стремимся обеспечить высочайший уровень качества обслуживания в теннисном центре ЦСКА.
+            Мы стремимся обеспечить высочайший уровень качества обслуживания.
             Ваши отзывы помогают нам становиться лучше.
           </p>
           <p className="text-gray-600">

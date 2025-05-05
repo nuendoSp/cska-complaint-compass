@@ -69,7 +69,7 @@ export default function ComplaintDetailPage() {
         <div className="space-y-4">
           <div>
             <h3 className="font-semibold">Локация</h3>
-            <p>ТЦ "ЦСКА"</p>
+            <p>{complaint.locationname || complaint.location || ''}</p>
           </div>
           <div className="flex flex-col gap-2">
             <div className="text-gray-600">Телефон заявителя:</div>

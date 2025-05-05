@@ -97,6 +97,20 @@ export const AssigneeManager = () => {
     }
   };
 
+  // Новый обработчик смены локации
+  const handleLocationChange = async (complaintId: string, locationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('complaints')
+        .update({ location_id: locationId })
+        .eq('id', complaintId);
+      if (error) throw error;
+      await fetchData();
+    } catch (error) {
+      console.error('Error updating location:', error);
+    }
+  };
+
   if (loading) {
     return <div>Загрузка...</div>;
   }
@@ -124,16 +138,14 @@ export const AssigneeManager = () => {
               <TableCell>
                 <Select
                   value={complaint.location_id || ''}
-                  onValueChange={(value) => handleAssigneeChange(complaint.id, value)}
+                  onValueChange={(value) => handleLocationChange(complaint.id, value)}
                 >
                   <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Выберите локацию" />
                   </SelectTrigger>
                   <SelectContent>
-                    {locations.map((location) => (
-                      <SelectItem key={location.id} value={location.id}>
-                        {location.name}
-                      </SelectItem>
+                    {locations.map((loc) => (
+                      <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

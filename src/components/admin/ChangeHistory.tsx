@@ -14,7 +14,7 @@ import { Badge } from '../ui/badge';
 interface ChangeHistory {
   id: string;
   complaint_id: string;
-  field: string;
+  field_name: string;
   old_value: string;
   new_value: string;
   changed_by: string;
@@ -57,8 +57,9 @@ export const ChangeHistory = () => {
     const fieldNames: Record<string, string> = {
       status: 'Статус',
       priority_id: 'Приоритет',
-      assignee_id: 'Ответственный',
-      response: 'Ответ'
+      assignee_id: 'Исполнитель',
+      location_id: 'Локация',
+      response: 'Ответ',
     };
     return fieldNames[field] || field;
   };
@@ -69,13 +70,25 @@ export const ChangeHistory = () => {
         new: 'bg-blue-500',
         processing: 'bg-yellow-500',
         resolved: 'bg-green-500',
-        rejected: 'bg-red-500'
+        rejected: 'bg-red-500',
+        in_progress: 'bg-yellow-400',
+        closed: 'bg-gray-500',
       };
       return (
-        <Badge className={statusColors[value]}>
+        <Badge className={statusColors[value] || ''}>
           {value}
         </Badge>
       );
+    }
+    if (field === 'location_id') {
+      if (value === 'cska_default') return 'ТЦ "ЦСКА"';
+      if (value === 'ace_default') return 'ТЦ "ЭЙС"';
+      if (value === 'adk_default') return 'ТЦ "АДК"';
+      return value;
+    }
+    if (field === 'assignee_id') {
+      // Можно добавить отображение имени исполнителя, если есть данные
+      return value;
     }
     return value;
   };
@@ -109,13 +122,13 @@ export const ChangeHistory = () => {
                 {complaints[change.complaint_id]?.description || 'Неизвестно'}
               </TableCell>
               <TableCell>
-                {getFieldDisplayName(change.field)}
+                {getFieldDisplayName(change.field_name)}
               </TableCell>
               <TableCell>
-                {formatValue(change.field, change.old_value)}
+                {formatValue(change.field_name, change.old_value)}
               </TableCell>
               <TableCell>
-                {formatValue(change.field, change.new_value)}
+                {formatValue(change.field_name, change.new_value)}
               </TableCell>
               <TableCell>
                 {change.changed_by}

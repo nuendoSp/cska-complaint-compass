@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -42,11 +42,10 @@ const categories = [
 ] as const;
 
 const complaintSchema = z.object({
-  title: z.string().min(3, { message: 'Укажите тему обращения (минимум 3 символа)' }),
-  category: z.enum(categories),
-  description: z.string().min(10, {
-    message: "Описание должно содержать не менее 10 символов.",
-  }),
+  location: z.string().min(1, 'Выберите локацию'),
+  title: z.string().min(1, 'Укажите тему обращения'),
+  category: z.string().min(1, 'Выберите категорию'),
+  description: z.string().min(1, 'Опишите проблему'),
   contact_phone: z
     .string()
     .regex(/^(\+7\(\d{3}\)\d{3}-\d{2}-\d{2})?$/, { message: "Формат телефона: +7(XXX) XXX-XX-XX" })
@@ -77,6 +76,8 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
   
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
   const form = useForm<FormData>({
     resolver: zodResolver(complaintSchema),
@@ -88,6 +89,14 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
       contact_email: "",
     },
   });
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const { data, error } = await supabase.from('locations').select('id, name');
+      if (!error && data) setLocations(data);
+    };
+    fetchLocations();
+  }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
@@ -194,13 +203,15 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
       const validAttachments = uploadedAttachments.filter((attachment): attachment is FileAttachment => attachment !== null);
       console.log('Valid attachments:', validAttachments);
 
+      // Находим выбранную локацию по id
+      const selectedLocation = locations.find(loc => loc.id === selectedLocationId);
       const complaintData = {
         title: data.title,
         description: data.description,
         category: data.category as ComplaintCategory,
-        location: 'ТЦ "ЦСКА"',
-        location_id: 'cska_default',
-        locationname: 'ТЦ "ЦСКА"',
+        location: selectedLocation?.name || '',
+        location_id: selectedLocationId,
+        locationname: selectedLocation?.name || '',
         user_id: 'anonymous',
         contact_phone: data.contact_phone || undefined,
         contact_email: data.contact_email || undefined,
@@ -235,6 +246,27 @@ const ComplaintForm: React.FC<ComplaintFormProps> = ({ locationId: propLocationI
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Локация</FormLabel>
+                <Select required value={selectedLocationId} onValueChange={(val) => { setSelectedLocationId(val); field.onChange(val); }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите локацию" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map(loc => (
+                      <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="title"
