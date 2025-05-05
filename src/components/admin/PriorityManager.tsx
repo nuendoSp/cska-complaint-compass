@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '../ui/table';
+import { useComplaintContext } from '@/context/ComplaintContext';
 
 interface Priority {
   id: string;
@@ -45,10 +46,18 @@ const priorityLevels = [
   }
 ];
 
+// Цвета для приоритетов
+const priorityColors: Record<string, string> = {
+  'Высокий': '#ef4444', // красный
+  'Средний': '#eab308', // желтый
+  'Низкий': '#22c55e',  // зеленый
+};
+
 export const PriorityManager = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [loading, setLoading] = useState(true);
+  const { getComplaints } = useComplaintContext();
 
   // Добавляем словари для перевода
   const categoryRu: Record<string, string> = {
@@ -92,18 +101,12 @@ export const PriorityManager = () => {
     }
   };
 
-  const handlePriorityChange = async (complaintId: string, priorityId: string) => {
-    try {
-      const { error } = await supabase
-        .from('complaints')
-        .update({ priority_id: priorityId })
-        .eq('id', complaintId);
-
-      if (error) throw error;
-      await fetchData();
-    } catch (error) {
-      console.error('Error updating priority:', error);
-    }
+  const handlePriorityChange = async (complaintId: string, value: string) => {
+    const priority_id = value === 'none' ? null : value;
+    const { error } = await supabase.from('complaints').update({ priority_id }).eq('id', complaintId);
+    if (error) throw error;
+    await fetchData();
+    await getComplaints();
   };
 
   if (loading) {
@@ -152,45 +155,65 @@ export const PriorityManager = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {complaints.map((complaint, idx) => (
-            <TableRow key={complaint.id}>
-              <TableCell>{`${idx + 1}. ${complaint.title || 'Без темы'}`}</TableCell>
-              <TableCell>{categoryRu[complaint.category] || complaint.category}</TableCell>
-              <TableCell>{statusRu[complaint.status] || complaint.status}</TableCell>
-              <TableCell>
-                <Select
-                  value={complaint.priority_id || ''}
-                  onValueChange={(value) => handlePriorityChange(complaint.id, value)}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Выберите приоритет" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priorities.map((priority) => (
-                      <SelectItem key={priority.id} value={priority.id}>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: priority.color }}
-                          />
-                          {priority.name}
-                        </div>
+          {complaints.map((complaint, idx) => {
+            const priority = priorities.find(p => p.id === complaint.priority_id);
+            return (
+              <TableRow key={complaint.id}>
+                <TableCell>{`${idx + 1}. ${complaint.title || 'Без темы'}`}</TableCell>
+                <TableCell>{categoryRu[complaint.category] || complaint.category}</TableCell>
+                <TableCell>{statusRu[complaint.status] || complaint.status}</TableCell>
+                <TableCell>
+                  <Select
+                    value={complaint.priority_id || 'none'}
+                    onValueChange={(value) => handlePriorityChange(complaint.id, value)}
+                  >
+                    <SelectTrigger className="w-[140px]">
+                      {(() => {
+                        const selected = priorities.find(p => p.id === (complaint.priority_id || ''));
+                        return (
+                          <span className="flex items-center gap-2">
+                            <span
+                              className="inline-block w-3 h-3 rounded-full mr-2"
+                              style={{ backgroundColor: selected ? (selected.color || priorityColors[selected.name] || '#d1d5db') : '#d1d5db', minWidth: 12, minHeight: 12 }}
+                            />
+                            {selected ? selected.name : 'Без приоритета'}
+                          </span>
+                        );
+                      })()}
+                    </SelectTrigger>
+                    <SelectContent>
+                      {priorities.map((priority) => (
+                        <SelectItem key={priority.id} value={priority.id}>
+                          <span className="flex items-center gap-2">
+                            <span
+                              className="inline-block w-3 h-3 rounded-full mr-2"
+                              style={{ backgroundColor: priority.color || priorityColors[priority.name] || '#d1d5db', minWidth: 12, minHeight: 12 }}
+                            />
+                            {priority.name}
+                          </span>
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="none">
+                        <span className="flex items-center gap-2">
+                          <span className="inline-block w-3 h-3 rounded-full bg-gray-300 mr-2" style={{ minWidth: 12, minHeight: 12 }} />
+                          Без приоритета
+                        </span>
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handlePriorityChange(complaint.id, '')}
-                >
-                  Сбросить
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handlePriorityChange(complaint.id, '')}
+                  >
+                    Сбросить
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +23,7 @@ import StatusBadge from './StatusBadge';
 import { Complaint, ComplaintCategory } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { Rating } from '@/components/ui/rating';
+import { useComplaintContext } from '@/context/ComplaintContext';
 
 interface ComplaintsListProps {
   complaints: Complaint[];
@@ -37,6 +39,13 @@ interface ComplaintsListProps {
   onDeleteResponse: (complaintId: string, responseId: string) => void;
   onDeleteComplaint: (complaintId: string) => void;
   onDeleteMultipleComplaints: (complaintIds: string[]) => void;
+}
+
+interface Priority {
+  id: string;
+  name: string;
+  color: string;
+  description: string;
 }
 
 const ComplaintsList: React.FC<ComplaintsListProps> = ({
@@ -55,6 +64,16 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
   onDeleteMultipleComplaints,
 }) => {
   const [selectedComplaints, setSelectedComplaints] = useState<string[]>([]);
+  const [priorities, setPriorities] = useState<Priority[]>([]);
+  const { getComplaints } = useComplaintContext();
+
+  useEffect(() => {
+    const fetchPriorities = async () => {
+      const { data, error } = await supabase.from('priorities').select('*');
+      if (!error && data) setPriorities(data);
+    };
+    fetchPriorities();
+  }, []);
 
   // Filter complaints based on search and filters
   const filteredComplaints = complaints.filter(complaint => {
@@ -103,6 +122,20 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
     processing: 'В обработке',
     resolved: 'Решено',
     rejected: 'Отклонено',
+  };
+
+  // Добавляю функцию смены приоритета
+  const handlePriorityChange = async (complaintId: string, value: string) => {
+    const priority_id = value === 'none' ? null : value;
+    await supabase.from('complaints').update({ priority_id }).eq('id', complaintId);
+    await getComplaints();
+  };
+
+  // Цвета для приоритетов
+  const priorityColors: Record<string, string> = {
+    'Высокий': '#ef4444', // красный
+    'Средний': '#eab308', // желтый
+    'Низкий': '#22c55e',  // зеленый
   };
 
   return (
@@ -172,193 +205,207 @@ const ComplaintsList: React.FC<ComplaintsListProps> = ({
         </Card>
       ) : (
         <div className="space-y-4">
-          {sortedComplaints.map(complaint => (
-            <Card 
-              key={complaint.id}
-              className={selectedComplaints.includes(complaint.id) ? 'border-blue-500 bg-blue-50' : ''}
-            >
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={selectedComplaints.includes(complaint.id)}
-                      onChange={() => handleSelectComplaint(complaint.id)}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div>
-                      <CardTitle className="text-lg">
-                        Обращение от {format(new Date(complaint.created_at || Date.now()), 'dd.MM.yyyy HH:mm')} — {complaint.title || 'Без темы'}
-                      </CardTitle>
-                      <CardDescription>
-                        Категория: {categoryRu[complaint.category] || 'Другое'} | Локация: {'ТЦ "ЦСКА"'}
-                      </CardDescription>
+          {sortedComplaints.map(complaint => {
+            // Получаем объект приоритета по id
+            const priority = priorities.find(p => p.id === complaint.priority_id);
+            return (
+              <Card 
+                key={complaint.id}
+                className={selectedComplaints.includes(complaint.id) ? 'border-blue-500 bg-blue-50' : ''}
+              >
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedComplaints.includes(complaint.id)}
+                        onChange={() => handleSelectComplaint(complaint.id)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div>
+                        <CardTitle className="text-lg">
+                          Обращение от {format(new Date(complaint.created_at || Date.now()), 'dd.MM.yyyy HH:mm')} — {complaint.title || 'Без темы'}
+                        </CardTitle>
+                        <CardDescription>
+                          Категория: {categoryRu[complaint.category] || 'Другое'} | Локация: {'ТЦ "ЦСКА"'}
+                        </CardDescription>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={complaint.status} />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => onDeleteComplaint(complaint.id)}
-                    >
-                      <XCircle className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <p className="text-gray-700 mb-4">{complaint.description}</p>
-                
-                {complaint.rating && (
-                  <div className="mb-4">
-                    <p className="text-sm font-medium text-gray-500 mb-2">Оценка:</p>
-                    <Rating value={complaint.rating} readonly size="md" />
-                  </div>
-                )}
-                
-                {complaint.attachments && complaint.attachments.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-sm font-medium text-gray-500 mb-2">Вложения:</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {complaint.attachments.map((attachment, index) => {
-                        console.log('Attachment in ComplaintsList:', attachment);
-                        const isString = typeof attachment === 'string';
-                        
-                        const url = isString ? attachment : attachment.url;
-                        const name = isString ? `Вложение ${index + 1}` : attachment.name;
-                        
-                        console.log('Processing attachment:', { url, name });
-                        
-                        if (!url) {
-                          console.error('No URL for attachment:', attachment);
-                          return null;
-                        }
-                        
-                        return (
-                          <div key={isString ? index : attachment.id} className="relative group">
-                            <img
-                              src={url}
-                              alt={name}
-                              className="w-full h-24 object-cover rounded-md cursor-pointer"
-                              onClick={() => window.open(url, '_blank')}
-                              onError={(e) => {
-                                console.error('Image load error:', e);
-                                const target = e.target as HTMLImageElement;
-                                console.log('Failed URL:', target.src);
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity" />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-                
-                {complaint.response && (
-                  <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-100">
-                    <div className="flex justify-between mb-1">
-                      <h4 className="font-medium text-blue-800 flex items-center">
-                        <MessageSquare className="h-4 w-4 mr-1" />
-                        Ответ администратора
-                      </h4>
+                    <div className="flex items-center gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">
-                          {format(new Date(complaint.response.respondedAt), 'dd.MM.yyyy HH:mm')}
+                        <span className={`flex items-center gap-1 text-sm font-medium ${priority ? '' : 'text-gray-400'}`}
+                          style={priority ? { color: priority.color } : {}}>
+                          <span
+                            className="inline-block w-3 h-3 rounded-full"
+                            style={{ backgroundColor: priority ? (priority.color || priorityColors[priority.name] || '#d1d5db') : '#d1d5db', minWidth: 12, minHeight: 12 }}
+                          />
+                          {priority ? priority.name : 'Без приоритета'}
                         </span>
+                        <StatusBadge status={complaint.status} />
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => onDeleteResponse(complaint.id, complaint.response.id)}
+                          onClick={() => onDeleteComplaint(complaint.id)}
                         >
                           <XCircle className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <MessageSquare className="h-4 w-4" />
-                      <span>
-                        Ответ от {complaint.response.adminName} ({format(new Date(complaint.response.created_at), 'dd.MM.yyyy HH:mm')})
-                      </span>
-                    </div>
                   </div>
-                )}
-              </CardContent>
+                </CardHeader>
 
-              <CardFooter className="flex justify-between">
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="gap-1" onClick={() => onOpenDetailsDialog(complaint)}>
-                    <FileText className="h-3.5 w-3.5" />
-                    Подробнее
-                  </Button>
-                </div>
+                <CardContent>
+                  <p className="text-gray-700 mb-4">{complaint.description}</p>
+                  
+                  {complaint.rating && (
+                    <div className="mb-4">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Оценка:</p>
+                      <Rating value={complaint.rating} readonly size="md" />
+                    </div>
+                  )}
+                  
+                  {complaint.attachments && complaint.attachments.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Вложения:</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {complaint.attachments.map((attachment, index) => {
+                          console.log('Attachment in ComplaintsList:', attachment);
+                          const isString = typeof attachment === 'string';
+                          
+                          const url = isString ? attachment : attachment.url;
+                          const name = isString ? `Вложение ${index + 1}` : attachment.name;
+                          
+                          console.log('Processing attachment:', { url, name });
+                          
+                          if (!url) {
+                            console.error('No URL for attachment:', attachment);
+                            return null;
+                          }
+                          
+                          return (
+                            <div key={isString ? index : attachment.id} className="relative group">
+                              <img
+                                src={url}
+                                alt={name}
+                                className="w-full h-24 object-cover rounded-md cursor-pointer"
+                                onClick={() => window.open(url, '_blank')}
+                                onError={(e) => {
+                                  console.error('Image load error:', e);
+                                  const target = e.target as HTMLImageElement;
+                                  console.log('Failed URL:', target.src);
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity" />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {complaint.response && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-100">
+                      <div className="flex justify-between mb-1">
+                        <h4 className="font-medium text-blue-800 flex items-center">
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Ответ администратора
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">
+                            {complaint.response ? format(new Date(complaint.response.respondedAt), 'dd.MM.yyyy HH:mm') : ''}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => complaint.response && onDeleteResponse(complaint.id, complaint.response.id)}
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <MessageSquare className="h-4 w-4" />
+                        <span>
+                          {complaint.response ? `Ответ от ${complaint.response.adminName} (${format(new Date(complaint.response.created_at), 'dd.MM.yyyy HH:mm')})` : ''}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
 
-                <div className="flex gap-2">
-                  {complaint.status === 'new' && (
-                    <>
+                <CardFooter className="flex justify-between">
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="gap-1" onClick={() => onOpenDetailsDialog(complaint)}>
+                      <FileText className="h-3.5 w-3.5" />
+                      Подробнее
+                    </Button>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {complaint.status === 'new' && (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="gap-1 border-yellow-500 text-yellow-500 hover:bg-yellow-50"
+                          onClick={() => onUpdateStatus(complaint.id, 'processing')}
+                        >
+                          <Clock className="h-3.5 w-3.5" />
+                          Взять в работу
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="gap-1 border-red-500 text-red-500 hover:bg-red-50"
+                          onClick={() => onUpdateStatus(complaint.id, 'rejected')}
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                          Отклонить
+                        </Button>
+                      </>
+                    )}
+
+                    {complaint.status === 'processing' && (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="gap-1 border-blue-500 text-blue-500 hover:bg-blue-50"
+                          onClick={() => onOpenResponseDialog(complaint)}
+                        >
+                          <MessageSquare className="h-3.5 w-3.5" />
+                          Ответить
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="gap-1 border-green-500 text-green-500 hover:bg-green-50"
+                          onClick={() => onUpdateStatus(complaint.id, 'resolved')}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Завершить
+                        </Button>
+                      </>
+                    )}
+
+                    {(complaint.status === 'resolved' || complaint.status === 'rejected') && !complaint.response && (
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="gap-1 border-yellow-500 text-yellow-500 hover:bg-yellow-50"
+                        className="gap-1"
                         onClick={() => onUpdateStatus(complaint.id, 'processing')}
                       >
-                        <Clock className="h-3.5 w-3.5" />
-                        Взять в работу
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        Возобновить
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="gap-1 border-red-500 text-red-500 hover:bg-red-50"
-                        onClick={() => onUpdateStatus(complaint.id, 'rejected')}
-                      >
-                        <XCircle className="h-3.5 w-3.5" />
-                        Отклонить
-                      </Button>
-                    </>
-                  )}
-
-                  {complaint.status === 'processing' && (
-                    <>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="gap-1 border-blue-500 text-blue-500 hover:bg-blue-50"
-                        onClick={() => onOpenResponseDialog(complaint)}
-                      >
-                        <MessageSquare className="h-3.5 w-3.5" />
-                        Ответить
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="gap-1 border-green-500 text-green-500 hover:bg-green-50"
-                        onClick={() => onUpdateStatus(complaint.id, 'resolved')}
-                      >
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Завершить
-                      </Button>
-                    </>
-                  )}
-
-                  {(complaint.status === 'resolved' || complaint.status === 'rejected') && !complaint.response && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="gap-1"
-                      onClick={() => onUpdateStatus(complaint.id, 'processing')}
-                    >
-                      <AlertCircle className="h-3.5 w-3.5" />
-                      Возобновить
-                    </Button>
-                  )}
-                </div>
-              </CardFooter>
-            </Card>
-          ))}
+                    )}
+                  </div>
+                </CardFooter>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

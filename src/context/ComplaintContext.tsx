@@ -14,6 +14,7 @@ interface ComplaintContextType {
   respondToComplaint: (complaintId: string, response: Omit<ComplaintResponse, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   deleteResponse: (complaintId: string) => Promise<void>;
   deleteComplaint: (complaintId: string) => Promise<void>;
+  getComplaints: () => Promise<void>;
 }
 
 const ComplaintContext = createContext<ComplaintContextType | undefined>(undefined);
@@ -121,7 +122,8 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             created_at: complaint.response.created_at,
             updated_at: complaint.response.updated_at
           } : undefined,
-          attachments: validAttachments
+          attachments: validAttachments,
+          priority_id: complaint.priority_id || null,
         };
       }));
 
@@ -267,13 +269,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       setComplaints(prev => prev.map(c => c.id === id ? formattedData : c));
       
-      // Отправляем уведомление об обновлении статуса в Telegram только если действие выполнено администратором
-      if (updates.status && localStorage.getItem('isAdmin') === 'true') {
-        await sendTelegramNotification(formattedData, 'updated');
-        toast.success(`Статус жалобы изменен на "${getStatusText(updates.status)}"`);
-      } else {
-        toast.success('Жалоба успешно обновлена');
-      }
+      toast.success('Жалоба успешно обновлена');
     } catch (error) {
       console.error('Error updating complaint:', error);
       toast.error('Ошибка при обновлении жалобы');
@@ -566,56 +562,26 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       if (fetchError) throw fetchError;
 
-      console.log('Полученные данные обращения:', complaint);
-
       // Удаляем файлы из storage
       if (complaint?.attachments && Array.isArray(complaint.attachments)) {
-        console.log('Найдены вложения для удаления:', complaint.attachments);
-        
         for (const attachment of complaint.attachments) {
-          console.log('Обработка вложения:', attachment);
-          
           let fileName;
-          
           if (typeof attachment === 'string') {
-            // Если attachment - строка URL, извлекаем имя файла из URL
             const urlParts = attachment.split('/');
             fileName = decodeURIComponent(urlParts[urlParts.length - 1]);
-            console.log('Извлечено имя файла из URL:', fileName);
           } else if (typeof attachment === 'object' && attachment.url) {
-            // Если attachment - объект с URL, извлекаем имя файла из URL
             const urlParts = attachment.url.split('/');
             fileName = decodeURIComponent(urlParts[urlParts.length - 1]);
-            console.log('Извлечено имя файла из объекта URL:', fileName);
           } else if (typeof attachment === 'object' && attachment.name) {
-            // Если есть прямое имя файла
             fileName = attachment.name;
-            console.log('Использовано прямое имя файла:', fileName);
           }
-
           if (fileName) {
-            console.log('Попытка удаления файла из storage:', fileName);
-            
             try {
-              const { data: listData } = await supabase.storage
-                .from('complaint_files')
-                .list();
-              console.log('Текущие файлы в storage:', listData);
-              
               const { error: deleteError } = await supabase.storage
                 .from('complaint_files')
                 .remove([fileName]);
-
               if (deleteError) {
                 console.error('Ошибка при удалении файла:', fileName, deleteError);
-              } else {
-                console.log('Файл успешно удален:', fileName);
-                
-                // Проверяем, действительно ли файл удален
-                const { data: listAfterDelete } = await supabase.storage
-                  .from('complaint_files')
-                  .list();
-                console.log('Файлы в storage после удаления:', listAfterDelete);
               }
             } catch (storageError) {
               console.error('Ошибка при работе с storage:', storageError);
@@ -624,16 +590,21 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       }
 
-      // Удаляем само обращение
+      // Удаляем само обращение из Supabase
       const { error } = await supabase
         .from('complaints')
         .delete()
         .eq('id', complaintId);
 
-      if (error) throw error;
-      
+      if (error) {
+        console.error('Ошибка при удалении жалобы:', error);
+        toast.error('Ошибка при удалении жалобы: ' + error.message);
+        return;
+      }
+
+      // Только если удаление прошло успешно — обновляем состояние
       setComplaints(prev => prev.filter(c => c.id !== complaintId));
-      
+
       // Отправляем уведомление об удалении жалобы в Telegram только если действие выполнено администратором
       if (localStorage.getItem('isAdmin') === 'true') {
         await sendTelegramNotification({
@@ -651,11 +622,11 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           attachments: []
         }, 'updated');
       }
-      
+
       toast.success('Жалоба успешно удалена');
     } catch (error) {
-      console.error('Error deleting complaint:', error);
-      toast.error('Ошибка при удалении жалобы');
+      console.error('Ошибка при удалении жалобы:', error);
+      toast.error('Ошибка при удалении жалобы: ' + (error?.message || error));
     }
   };
 
@@ -671,6 +642,7 @@ export const ComplaintProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         respondToComplaint,
         deleteResponse,
         deleteComplaint,
+        getComplaints,
       }}
     >
       {children}
